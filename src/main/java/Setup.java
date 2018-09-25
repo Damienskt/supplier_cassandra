@@ -8,10 +8,12 @@ import com.datastax.driver.core.Cluster;
 import com.datastax.driver.core.PreparedStatement;
 import com.datastax.driver.core.Session;
 
+import constant.Table;
+
 public class Setup {
     static final String[] CONTACT_POINTS = {"localhost"};
     static final String KEY_SPACE = "wholesale_supplier";
-    static final int REPLICATION_FACTOR = 3;
+    static final int REPLICATION_FACTOR = 1;
 
     private Session session;
 
@@ -29,7 +31,7 @@ public class Setup {
         createSchema();
         loadData();
 
-        System.out.println("Setup is done!");
+        System.out.println("Data has been successfully imported into the database.");
 
         session.close();
         cluster.close();
@@ -51,7 +53,7 @@ public class Setup {
     }
 
     private void createSchema() {
-        String createWarehouseQuery = "CREATE TABLE " + KEY_SPACE + "." + Table.WAREHOUSE + " ("
+        String createWarehouseQuery = "CREATE TABLE " + KEY_SPACE + "." + Table.TABLE_WAREHOUSE + " ("
                 + " W_ID INT, "
                 + " W_NAME TEXT, "
                 + " W_STREET_1 TEXT, "
@@ -64,7 +66,7 @@ public class Setup {
                 + " PRIMARY KEY (W_ID) "
                 + ");";
 
-        String createDistrictQuery = "CREATE TABLE " + KEY_SPACE + "." + Table.DISTRICT + " ("
+        String createDistrictQuery = "CREATE TABLE " + KEY_SPACE + "." + Table.TABLE_DISTRICT + " ("
                 + " D_W_ID INT, "
                 + " D_ID INT, "
                 + " D_NAME TEXT, "
@@ -79,7 +81,7 @@ public class Setup {
                 + " PRIMARY KEY (D_W_ID, D_ID) "
                 + ");";
 
-        String createCustomerQuery = "CREATE TABLE " + KEY_SPACE + "." + Table.CUSTOMER + " ("
+        String createCustomerQuery = "CREATE TABLE " + KEY_SPACE + "." + Table.TABLE_CUSTOMER + " ("
                 + " C_W_ID INT, "
                 + " C_D_ID INT, "
                 + " C_ID INT, "
@@ -104,7 +106,7 @@ public class Setup {
                 + " PRIMARY KEY (C_W_ID, C_D_ID, C_ID) "
                 + ");";
 
-        String createOrderQuery = "CREATE TABLE " + KEY_SPACE + "." + Table.ORDER + " ("
+        String createOrderQuery = "CREATE TABLE " + KEY_SPACE + "." + Table.TABLE_ORDER + " ("
                 + " O_W_ID INT, "
                 + " O_D_ID INT, "
                 + " O_ID INT, "
@@ -116,7 +118,7 @@ public class Setup {
                 + " PRIMARY KEY (O_W_ID, O_D_ID, O_ID, O_C_ID) "
                 + ");";
 
-        String createItemQuery = "CREATE TABLE " + KEY_SPACE + "." + Table.ITEM + " ("
+        String createItemQuery = "CREATE TABLE " + KEY_SPACE + "." + Table.TABLE_ITEM + " ("
                 + " I_ID INT, "
                 + " I_NAME TEXT, "
                 + " I_PRICE DECIMAL, "
@@ -125,7 +127,7 @@ public class Setup {
                 + " PRIMARY KEY (I_ID) "
                 + ");";
 
-        String createOrderLineQuery = "CREATE TABLE " + KEY_SPACE + "." + Table.ORDER_LINE + " ("
+        String createOrderLineQuery = "CREATE TABLE " + KEY_SPACE + "." + Table.TABLE_ORDERLINE + " ("
                 + " OL_W_ID INT, "
                 + " OL_D_ID INT, "
                 + " OL_O_ID INT, "
@@ -139,7 +141,7 @@ public class Setup {
                 + " PRIMARY KEY ((OL_W_ID, OL_D_ID, OL_O_ID), OL_NUMBER) "
                 + " ) WITH CLUSTERING ORDER BY (OL_NUMBER ASC);";
 
-        String createStockQuery = "CREATE TABLE " + KEY_SPACE + "." + Table.STOCK + " ("
+        String createStockQuery = "CREATE TABLE " + KEY_SPACE + "." + Table.TABLE_STOCK + " ("
                 + " S_W_ID INT, "
                 + " S_I_ID INT, "
                 + " S_QUANTITY DECIMAL, "
@@ -161,27 +163,33 @@ public class Setup {
                 + " );";
 
         session.execute(createWarehouseQuery);
-        System.out.println("Successfully created table : " + Table.WAREHOUSE);
+        System.out.println(Table.getCreateTableSuccessMessage(Table.TABLE_WAREHOUSE));
         session.execute(createDistrictQuery);
-        System.out.println("Successfully created table : " + Table.DISTRICT);
+        System.out.println(Table.getCreateTableSuccessMessage(Table.TABLE_DISTRICT));
         session.execute(createCustomerQuery);
-        System.out.println("Successfully created table : " + Table.CUSTOMER);
+        System.out.println(Table.getCreateTableSuccessMessage(Table.TABLE_CUSTOMER));
         session.execute(createOrderQuery);
-        System.out.println("Successfully created table : " + Table.ORDER);
+        System.out.println(Table.getCreateTableSuccessMessage(Table.TABLE_ORDER));
         session.execute(createItemQuery);
-        System.out.println("Successfully created table : " + Table.ITEM);
+        System.out.println(Table.getCreateTableSuccessMessage(Table.TABLE_ITEM));
         session.execute(createOrderLineQuery);
-        System.out.println("Successfully created table : " + Table.ORDER_LINE);
+        System.out.println(Table.getCreateTableSuccessMessage(Table.TABLE_ORDERLINE));
         session.execute(createStockQuery);
-        System.out.println("Successfully created table : " + Table.STOCK);
+        System.out.println(Table.getCreateTableSuccessMessage(Table.TABLE_STOCK));
     }
 
     private void loadData() {
         loadWarehouseData();
+        loadDistrictData();
+        loadCustomerData();
+        loadOrderData();
+        loadItemData();
+        loadOrderLineData();
+        loadStockData();
     }
 
     private void loadWarehouseData() {
-        String insertWarehouseQuery = "INSERT INTO " + KEY_SPACE + ".warehouse ("
+        String insertWarehouseQuery = "INSERT INTO " + KEY_SPACE + "." + Table.TABLE_WAREHOUSE + " ("
                 + " W_ID, W_NAME, W_STREET_1, W_STREET_2, W_CITY, W_STATE, W_ZIP, "
                 + " W_TAX, W_YTD ) "
                 + " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?); ";
@@ -189,8 +197,8 @@ public class Setup {
         String currLine;
 
         try {
-            System.out.println("Loading data for table : warehouse");
-            FileReader fr = new FileReader("data/warehouse.csv");
+            System.out.println(Table.getLoadingMessage(Table.TABLE_WAREHOUSE));
+            FileReader fr = new FileReader(Table.getDataFileLocation(Table.FILE_WAREHOUSE));
             BufferedReader bf = new BufferedReader(fr);
             while ((currLine = bf.readLine()) != null) {
                 String[] line = currLine.split(",");
@@ -201,9 +209,33 @@ public class Setup {
                 session.execute(bs);
             }
         } catch (IOException ioe) {
-            System.out.println("Working Directory = " +
-                    System.getProperty("user.dir"));
-            System.out.println("Error loading warehouse data : " + ioe.getMessage());
+            //System.out.println("Working Directory = " +
+            //        System.getProperty("user.dir"));
+            System.out.println(Table.getLoadingErrorMessage(Table.TABLE_WAREHOUSE) + ioe.getMessage());
         }
+    }
+
+    private void loadDistrictData() {
+
+    }
+
+    private void loadCustomerData() {
+
+    }
+
+    private void loadOrderData() {
+
+    }
+
+    private void loadItemData() {
+
+    }
+
+    private void loadOrderLineData() {
+
+    }
+
+    private void loadStockData() {
+
     }
 }
