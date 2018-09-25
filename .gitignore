@@ -1,5 +1,7 @@
-.idea/workspace.xml
-.idea/vcs.xml
-.idea/preferred-vcs.xml
+.idea/
 data/
+<<<<<<< HEAD
 target/
+=======
+target/
+>>>>>>> 55554ae608dedbb9467322c49782dd205b8512ad
