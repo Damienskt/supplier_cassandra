@@ -1,5 +1,3 @@
-package com.cassandra.app;
-
 /**
  * Global constants for table name
  */
