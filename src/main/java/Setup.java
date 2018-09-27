@@ -34,6 +34,7 @@ public class Setup {
         dropOldKeySpace();
         createKeySpace();
         createSchema();
+        createView();
         loadData();
 
         System.out.println("Data has been successfully imported into the database.");
@@ -181,6 +182,17 @@ public class Setup {
         System.out.println(Table.getCreateTableSuccessMessage(Table.TABLE_ORDERLINE));
         session.execute(createStockQuery);
         System.out.println(Table.getCreateTableSuccessMessage(Table.TABLE_STOCK));
+    }
+
+    private void createView() {
+        String createCustomerBalancesViewCommand = "CREATE MATERIALIZED VIEW " + KEY_SPACE + "." + Table.VIEW_CUSTOMER_BALANCES + " AS "
+                + " SELECT C_ID from " + KEY_SPACE + "." + Table.TABLE_CUSTOMER
+                + " WHERE C_W_ID IS NOT NULL AND C_D_ID IS NOT NULL AND C_ID IS NOT NULL "
+                + " AND C_BALANCE IS NOT NULL "
+                + " PRIMARY KEY (C_BALANCE, C_W_ID, C_D_ID, C_ID)"
+                + " WITH CLUSTERING ORDER BY (C_BALANCE DESC)";
+        session.execute(createCustomerBalancesViewCommand);
+        System.out.println("Successfully created materialized view : " + Table.VIEW_CUSTOMER_BALANCES);
     }
 
     private void loadData() {
@@ -420,7 +432,7 @@ public class Setup {
                 session.execute(bs);
                 count++;
                 if (count % 1000 == 0) {
-                    System.out.println(Table.getLoadingMessage(Table.TABLE_STOCK) + " (" + Math.round((count/100000.0)*100) + "% done)");
+                    System.out.println(Table.getLoadingMessage(Table.TABLE_STOCK) + " (" + Math.round((count/1000000.0)*1000) / 10.0 + "% done)");
                 }
             }
         } catch (IOException ioe) {

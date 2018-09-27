@@ -16,6 +16,8 @@ public class Table {
     public static final String TABLE_ORDERLINE = "order_line";
     public static final String TABLE_STOCK = "stock";
 
+    public static final String VIEW_CUSTOMER_BALANCES = "customer_balances";
+
     /**
      *  File names of the data
      */
