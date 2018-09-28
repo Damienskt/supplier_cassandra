@@ -29,6 +29,8 @@ public class Table {
     public static final String FILE_ORDERLINE = "order-line";
     public static final String FILE_STOCK = "stock";
 
+    public static final String KEY_SPACE = "wholesale_supplier";
+
     public static String getCreateTableSuccessMessage(String tableName) {
         return "Successfully created table : " + tableName;
     }
