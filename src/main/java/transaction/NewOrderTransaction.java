@@ -27,32 +27,34 @@ public class NewOrderTransaction {
     private PreparedStatement updateDistrictNextOrderStatement;
     private PreparedStatement updateStockStatement;
 
-    private static final String SELECT_DISTRICT = " SELECT D_TAX, D_NEXT_O_ID FROM "
-            + Table.TABLE_DISTRICT + " WHERE D_W_ID = ? AND D_ID = ?; ";
-    private static final String SELECT_WAREHOUSE = " SELECT W_TAX FROM "
-            + Table.TABLE_WAREHOUSE + " WHERE W_ID = ?; ";
-    private static final String SELECT_STOCK = " SELECT * FROM "
-            + Table.TABLE_STOCK + " WHERE S_W_ID = ? AND S_I_ID = ?; ";
-    private static final String SELECT_ITEM = " SELECT I_NAME, I_PRICE FROM "
-            + Table.TABLE_ITEM + " WHERE I_ID = ?; ";
-    private static final String SELECT_CUSTOMER = " SELECT C_LAST, C_CREDIT, C_DISCOUNT FROM "
-            + Table.TABLE_CUSTOMER + " WHERE C_W_ID = ? AND C_D_ID = ? AND C_ID = ?; ";
+    private static final String KEY_SPACE_WITH_DOT = Table.KEY_SPACE + ".";
 
-    private static final String INSERT_ORDER = " INSERT INTO " + Table.TABLE_ORDER + " ("
+    private static final String SELECT_DISTRICT = " SELECT D_TAX, D_NEXT_O_ID FROM "
+            + KEY_SPACE_WITH_DOT + Table.TABLE_DISTRICT + " WHERE D_W_ID = ? AND D_ID = ?; ";
+    private static final String SELECT_WAREHOUSE = " SELECT W_TAX FROM "
+            + KEY_SPACE_WITH_DOT + Table.TABLE_WAREHOUSE + " WHERE W_ID = ?; ";
+    private static final String SELECT_STOCK = " SELECT * FROM "
+            + KEY_SPACE_WITH_DOT + Table.TABLE_STOCK + " WHERE S_W_ID = ? AND S_I_ID = ?; ";
+    private static final String SELECT_ITEM = " SELECT I_NAME, I_PRICE FROM "
+            + KEY_SPACE_WITH_DOT + Table.TABLE_ITEM + " WHERE I_ID = ?; ";
+    private static final String SELECT_CUSTOMER = " SELECT C_LAST, C_CREDIT, C_DISCOUNT FROM "
+            + KEY_SPACE_WITH_DOT + Table.TABLE_CUSTOMER + " WHERE C_W_ID = ? AND C_D_ID = ? AND C_ID = ?; ";
+
+    private static final String INSERT_ORDER = " INSERT INTO " + KEY_SPACE_WITH_DOT + Table.TABLE_ORDER + " ("
             + " O_W_ID, O_D_ID, O_ID, O_C_ID, O_CARRIER_ID, "
             + " O_OL_CNT, O_ALL_LOCAL, O_ENTRY_D ) "
             + " VALUES (?, ?, ?, ?, ?, ?, ?, ?); ";
-    private static final String INSERT_ORDERLINE = " INSERT INTO " + Table.TABLE_ORDERLINE + " ("
+    private static final String INSERT_ORDERLINE = " INSERT INTO " + KEY_SPACE_WITH_DOT + Table.TABLE_ORDERLINE + " ("
             + " OL_W_ID, OL_D_ID, OL_O_ID, OL_NUMBER, OL_I_ID, "
             + " OL_DELIVERY_D, OL_AMOUNT, OL_SUPPLY_W_ID, OL_QUANTITY, OL_DIST_INFO ) "
             + " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?); ";
 
-    private static final String UPDATE_CUSTOMER_LAST_O_ID = " UPDATE " + Table.TABLE_CUSTOMER
+    private static final String UPDATE_CUSTOMER_LAST_O_ID = " UPDATE " + KEY_SPACE_WITH_DOT + Table.TABLE_CUSTOMER
             + " SET C_LAST_O_ID = ?, C_O_ENTRY_D = ?, C_O_CARRIER_ID = ? "
             + " WHERE C_W_ID = ? AND C_D_ID = ? AND C_ID = ?;";
-    private static final String UPDATE_DISTRICT_NEXT_O_ID = " UPDATE " + Table.TABLE_DISTRICT
+    private static final String UPDATE_DISTRICT_NEXT_O_ID = " UPDATE " + KEY_SPACE_WITH_DOT + Table.TABLE_DISTRICT
             + " SET D_NEXT_O_ID = ? WHERE D_W_ID = ? AND D_ID = ?; ";
-    private static final String UPDATE_STOCK = " UPDATE " + Table.TABLE_STOCK
+    private static final String UPDATE_STOCK = " UPDATE " + KEY_SPACE_WITH_DOT + Table.TABLE_STOCK
             + " SET S_QUANTITY = ?, S_YTD = ?, S_ORDER_CNT = ?, S_REMOTE_CNT = ? "
             + " WHERE S_W_ID = ? AND S_I_ID = ?; ";
 
