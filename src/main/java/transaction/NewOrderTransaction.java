@@ -96,7 +96,7 @@ public class NewOrderTransaction {
                 break;
             }
         }
-        createNewOrder(nextOId, wId, dId, cId, numItems, currentDate, allLocal);
+        createNewOrder(nextOId, wId, dId, cId, new BigDecimal(numItems), currentDate, allLocal);
         updateCustomerLastOrder(nextOId, wId, dId, cId, currentDate);
 
         double totalAmount = 0;
@@ -127,7 +127,7 @@ public class NewOrderTransaction {
             String distInfo = stock.getString(getDistrictStringId(dId));
             createNewOrderLine(wId, dId, nextOId, i+1, iId, itemAmount, iWId, new BigDecimal(quantity), distInfo);
 
-            itemOutput[numItems] = "" + (i+1) + "\t" + item.getString("I_NAME") + "\t" + iWId + " " + quantity
+            itemOutput[i] = "" + (i+1) + "\t" + item.getString("I_NAME") + "\t" + iWId + " " + quantity
                     + "\t" + itemAmount + "\t" + adjustedQuantity;
         }
 
@@ -179,21 +179,18 @@ public class NewOrderTransaction {
         session.execute(updateDistrictNextOrderStatement.bind(nextOId, wId, dId));
     }
 
-    private void createNewOrder(int id, int wId, int dId, int cId, int numItems,
+    private void createNewOrder(int id, int wId, int dId, int cId, BigDecimal numItems,
             Date currentDate, BigDecimal allLocal) {
-        session.execute(insertOrderStatement.bind(
-                wId, dId, id, cId, null, numItems, allLocal, currentDate));
+        session.execute(insertOrderStatement.bind(wId, dId, id, cId, null, numItems, allLocal, currentDate));
     }
 
     private void updateCustomerLastOrder(int id, int wId, int dId, int cId, Date currentDate) {
-        session.execute(updateCustomerLastOrderStatement.bind(
-                  id, currentDate, null, wId, dId, cId));
+        session.execute(updateCustomerLastOrderStatement.bind(id, currentDate, null, wId, dId, cId));
     }
 
     private void updateStock(int wId, int iId, BigDecimal adjQuantity, BigDecimal ytd,
             int orderCount, int remoteCount) {
-        session.execute(updateStockStatement.bind(
-            adjQuantity, ytd, orderCount, remoteCount, wId, iId));
+        session.execute(updateStockStatement.bind(adjQuantity, ytd, orderCount, remoteCount, wId, iId));
     }
 
     private String getDistrictStringId(int dId) {
@@ -207,6 +204,6 @@ public class NewOrderTransaction {
     private void createNewOrderLine(int wId, int dId, int oId, int olNum, int iId,
             BigDecimal itemAmount, int supplyWId, BigDecimal quantity, String distInfo) {
         session.execute(insertOrderLineStatement.bind(
-                wId, dId, oId, olNum, iId, itemAmount, supplyWId, quantity, distInfo));
+                wId, dId, oId, olNum, iId, null, itemAmount, supplyWId, quantity, distInfo));
     }
 }
