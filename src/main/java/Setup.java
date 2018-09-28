@@ -16,7 +16,7 @@ import constant.Table;
 public class Setup {
     static final String[] CONTACT_POINTS = {"localhost"};
     static final String KEY_SPACE = "wholesale_supplier";
-    static final int REPLICATION_FACTOR = 1;
+    static final int REPLICATION_FACTOR = 3;
 
     private static final DateFormat DF = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
 
