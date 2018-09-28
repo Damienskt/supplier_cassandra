@@ -121,8 +121,8 @@ public class Setup {
                 + " O_OL_CNT DECIMAL, "
                 + " O_ALL_LOCAL DECIMAL, "
                 + " O_ENTRY_D TIMESTAMP, "
-                + " PRIMARY KEY (O_W_ID, O_D_ID, O_ID, O_C_ID) "
-                + ");";
+                + " PRIMARY KEY ((O_W_ID, O_D_ID), O_ID, O_C_ID) "
+                + ") WITH CLUSTERING ORDER BY (O_ID ASC);";
 
         String createItemQuery = "CREATE TABLE " + KEY_SPACE + "." + Table.TABLE_ITEM + " ("
                 + " I_ID INT, "
