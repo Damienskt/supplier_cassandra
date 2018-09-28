@@ -54,7 +54,7 @@ public class Transaction {
         //relatedCustomerTransaction = new RelatedCustomerTransaction(session);
     }
 
-    public void processNewOrder(int wId, int dId, int cId, int numItems,
+    public void processNewOrder(int cId, int wId, int dId, int numItems,
             int[] itemNum, int[] supplierWarehouse, int[] qty) {
         newOrderTransaction.processOrder(wId, dId, cId, numItems, itemNum, supplierWarehouse, qty);
     }
