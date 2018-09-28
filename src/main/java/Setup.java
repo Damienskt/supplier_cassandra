@@ -109,6 +109,9 @@ public class Setup {
                 + " C_PAYMENT_CNT INT, "
                 + " C_DELIVERY_CNT INT, "
                 + " C_DATA TEXT, "
+                + " C_LAST_O_ID INT, "
+                + " C_O_ENTRY_D TIMESTAMP, "
+                + " C_O_CARRIER_ID INT, "
                 + " PRIMARY KEY (C_W_ID, C_D_ID, C_ID) "
                 + ");";
 
@@ -121,8 +124,8 @@ public class Setup {
                 + " O_OL_CNT DECIMAL, "
                 + " O_ALL_LOCAL DECIMAL, "
                 + " O_ENTRY_D TIMESTAMP, "
-                + " PRIMARY KEY (O_W_ID, O_D_ID, O_ID, O_C_ID) "
-                + ");";
+                + " PRIMARY KEY ((O_W_ID, O_D_ID), O_ID, O_C_ID) "
+                + ") WITH CLUSTERING ORDER BY (O_ID ASC);";
 
         String createItemQuery = "CREATE TABLE " + KEY_SPACE + "." + Table.TABLE_ITEM + " ("
                 + " I_ID INT, "
@@ -264,8 +267,9 @@ public class Setup {
                 + " C_STREET_1, C_STREET_2, C_CITY, C_STATE, C_ZIP, "
                 + " C_PHONE, C_SINCE, C_CREDIT, C_CREDIT_LIM, C_DISCOUNT, "
                 + " C_BALANCE, C_YTD_PAYMENT, C_PAYMENT_CNT, C_DELIVERY_CNT, "
-                + " C_DATA ) "
-                + " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?); ";
+                + " C_DATA, C_LAST_O_ID, C_O_ENTRY_D, C_O_CARRIER_ID ) "
+                + " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, "
+                + " ?, ?, ?); ";
         PreparedStatement insertCustomerStatement = session.prepare(insertCustomerQuery);
         String currLine;
 
@@ -281,7 +285,7 @@ public class Setup {
                         line[3], line[4], line[5], line[6], line[7], line[8], line[9], line[10], line[11],
                         DF.parse(line[12]), line[13], new BigDecimal(line[14]), new BigDecimal(line[15]),
                         new BigDecimal(line[16]), Float.parseFloat(line[17]), Integer.parseInt(line[18]),
-                        Integer.parseInt(line[19]), line[20]);
+                        Integer.parseInt(line[19]), line[20], null, null, null);
                 session.execute(bs);
                 count++;
                 if (count % 3000 == 0) {
@@ -300,7 +304,11 @@ public class Setup {
                 + " O_W_ID, O_D_ID, O_ID, O_C_ID, O_CARRIER_ID, "
                 + " O_OL_CNT, O_ALL_LOCAL, O_ENTRY_D ) "
                 + " VALUES (?, ?, ?, ?, ?, ?, ?, ?); ";
+        String updateCustomerQuery = "UPDATE " + KEY_SPACE + "." + Table.TABLE_CUSTOMER +
+                " SET C_LAST_O_ID = ?, C_O_ENTRY_D = ?, C_O_CARRIER_ID = ? " +
+                " WHERE C_W_ID = ? AND C_D_ID = ? AND C_ID = ?;";
         PreparedStatement insertOrderStatement = session.prepare(insertOrderQuery);
+        PreparedStatement updateCustomerStatement = session.prepare(updateCustomerQuery);
         String currLine;
 
         try {
@@ -311,20 +319,28 @@ public class Setup {
             while ((currLine = bf.readLine()) != null) {
                 String[] line = currLine.split(",");
                 BoundStatement bs = null; // O_CARRIER_ID
+                BoundStatement bs2 = null;
                 if (!line[4].equals("null")) {
                     bs = insertOrderStatement.bind(
                             Integer.parseInt(line[0]), Integer.parseInt(line[1]), Integer.parseInt(line[2]),
                             Integer.parseInt(line[3]), Integer.parseInt(line[4]),
                             new BigDecimal(line[5]), new BigDecimal(line[6]),
                             DF.parse(line[7]));
+                    bs2 = updateCustomerStatement.bind(
+                            Integer.parseInt(line[2]), DF.parse(line[7]), Integer.parseInt(line[4]),
+                            Integer.parseInt(line[0]), Integer.parseInt(line[1]), Integer.parseInt(line[3]));
                 } else {
                     bs = insertOrderStatement.bind(
                             Integer.parseInt(line[0]), Integer.parseInt(line[1]), Integer.parseInt(line[2]),
                             Integer.parseInt(line[3]), null,
                             new BigDecimal(line[5]), new BigDecimal(line[6]),
                             DF.parse(line[7]));
+                    bs2 = updateCustomerStatement.bind(
+                            Integer.parseInt(line[2]), DF.parse(line[7]), null,
+                            Integer.parseInt(line[0]), Integer.parseInt(line[1]), Integer.parseInt(line[3]));
                 }
                 session.execute(bs);
+                session.execute(bs2);
                 count++;
                 if (count % 3000 == 0) {
                     System.out.println(Table.getLoadingMessage(Table.TABLE_ORDER) + " (" + Math.round((count/300000.0)*100) + "% done)");
