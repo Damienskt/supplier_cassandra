@@ -6,11 +6,11 @@
         <sourceOutputDir name="target/generated-sources/annotations" />
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
-        <module name="Cassandra_maven" />
+        <module name="cassandra" />
       </profile>
     </annotationProcessing>
     <bytecodeTargetLevel>
-      <module name="Cassandra_maven" target="1.5" />
+      <module name="cassandra" target="1.5" />
     </bytecodeTargetLevel>
   </component>
 </project>

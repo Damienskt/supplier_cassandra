@@ -22,7 +22,7 @@ public class Transaction {
 
     private Session session;
     private NewOrderTransaction newOrderTransaction;
-    //private PaymentTransaction paymentTransaction;
+    private PaymentTransaction paymentTransaction;
     //private DeliveryTransaction deliveryTransaction;
     private OrderStatusTransaction orderStatusTransaction;
     //private StockLevelTransaction stockLevelTransaction;
@@ -45,7 +45,7 @@ public class Transaction {
         session = cluster.connect();
 
         newOrderTransaction = new NewOrderTransaction(session);
-        //paymentTransaction = new PaymentTransaction(session);
+        paymentTransaction = new PaymentTransaction(session);
         //deliveryTransaction = new DeliveryTransaction(session);
         orderStatusTransaction = new OrderStatusTransaction(session);
         //stockLevelTransaction = new StockLevelTransaction(session);
@@ -57,6 +57,10 @@ public class Transaction {
     public void processNewOrder(int cId, int wId, int dId, int numItems,
             int[] itemNum, int[] supplierWarehouse, int[] qty) {
         newOrderTransaction.processOrder(wId, dId, cId, numItems, itemNum, supplierWarehouse, qty);
+    }
+
+    void processPayment(int wId, int dId, int cId, float payment) {
+        paymentTransaction.processPaymentTransaction(wId, dId, cId, payment);
     }
 
     public void processOrderStatus(int wId, int dId, int cId) {

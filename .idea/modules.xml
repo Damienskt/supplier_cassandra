@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/Cassandra_maven.iml" filepath="$PROJECT_DIR$/Cassandra_maven.iml" />
+      <module fileurl="file://$PROJECT_DIR$/cassandra.iml" filepath="$PROJECT_DIR$/cassandra.iml" />
     </modules>
   </component>
 </project>
