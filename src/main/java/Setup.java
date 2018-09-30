@@ -332,11 +332,11 @@ public class Setup {
                 } else {
                     bs = insertOrderStatement.bind(
                             Integer.parseInt(line[0]), Integer.parseInt(line[1]), Integer.parseInt(line[2]),
-                            Integer.parseInt(line[3]), null,
+                            Integer.parseInt(line[3]), -1,
                             new BigDecimal(line[5]), new BigDecimal(line[6]),
                             DF.parse(line[7]));
                     bs2 = updateCustomerStatement.bind(
-                            Integer.parseInt(line[2]), DF.parse(line[7]), null,
+                            Integer.parseInt(line[2]), DF.parse(line[7]), -1,
                             Integer.parseInt(line[0]), Integer.parseInt(line[1]), Integer.parseInt(line[3]));
                 }
                 session.execute(bs);

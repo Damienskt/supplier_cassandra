@@ -181,7 +181,7 @@ public class NewOrderTransaction {
 
     private void createNewOrder(int id, int wId, int dId, int cId, BigDecimal numItems,
             Date currentDate, BigDecimal allLocal) {
-        session.execute(insertOrderStatement.bind(wId, dId, id, cId, null, numItems, allLocal, currentDate));
+        session.execute(insertOrderStatement.bind(wId, dId, id, cId, -1, numItems, allLocal, currentDate));
     }
 
     private void updateCustomerLastOrder(int id, int wId, int dId, int cId, Date currentDate) {
