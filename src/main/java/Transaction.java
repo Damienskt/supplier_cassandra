@@ -23,7 +23,7 @@ public class Transaction {
     private Session session;
     private NewOrderTransaction newOrderTransaction;
     private PaymentTransaction paymentTransaction;
-    //private DeliveryTransaction deliveryTransaction;
+    private DeliveryTransaction deliveryTransaction;
     private OrderStatusTransaction orderStatusTransaction;
     //private StockLevelTransaction stockLevelTransaction;
     //private PopularItemTransaction popularItemTransaction;
@@ -46,7 +46,7 @@ public class Transaction {
 
         newOrderTransaction = new NewOrderTransaction(session);
         paymentTransaction = new PaymentTransaction(session);
-        //deliveryTransaction = new DeliveryTransaction(session);
+        deliveryTransaction = new DeliveryTransaction(session);
         orderStatusTransaction = new OrderStatusTransaction(session);
         //stockLevelTransaction = new StockLevelTransaction(session);
         //popularItemTransaction = new PopularItemTransaction(session);
@@ -61,6 +61,10 @@ public class Transaction {
 
     void processPayment(int wId, int dId, int cId, float payment) {
         paymentTransaction.processPaymentTransaction(wId, dId, cId, payment);
+    }
+
+    void processDelivery(int wId, int carrierId) {
+        deliveryTransaction.processDeliveryTransaction(wId, carrierId);
     }
 
     public void processOrderStatus(int wId, int dId, int cId) {
