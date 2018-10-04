@@ -4,6 +4,8 @@ import com.datastax.driver.core.PreparedStatement;
 import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Row;
 import com.datastax.driver.core.Session;
+
+import java.math.BigDecimal;
 import java.util.List;
 
 import constant.Table;
@@ -28,13 +30,13 @@ public class StockLevelTransaction {
                     + "FROM " + KEY_SPACE_WITH_DOT + Table.TABLE_ORDERLINE
                     + " WHERE OL_D_ID = ? "
                     + "AND OL_W_ID = ? "
-                    + "AND OL_O_ID = ?";
+                    + "AND OL_O_ID = ?;";
 
-    // Return 1 if Item is below threshold, else 0
+    // If return some count item is below the threshold level
     private static final String CHECK_IF_ITEM_BELOW_THRESHOLD =
             "SELECT COUNT(*) "
                     + "FROM " + KEY_SPACE_WITH_DOT + Table.TABLE_STOCK
-                    + "WHERE S_W_ID = ? "
+                    + " WHERE S_W_ID = ? "
                     + "AND S_I_ID = ? "
                     + "AND S_QUANTITY < ? "
                     + "ALLOW FILTERING;";
@@ -47,7 +49,7 @@ public class StockLevelTransaction {
         this.checkIfItemBelowThresholdStatement = session.prepare(CHECK_IF_ITEM_BELOW_THRESHOLD);
     }
 
-    public void processStockLevelTransaction(int W_ID, int D_ID, int T, int L) {
+    public void processStockLevelTransaction(int W_ID, int D_ID, BigDecimal T, int L) {
         /*
             Processing steps:
             1. Let N denote the value of the next available order number D NEXT O ID for district (W ID,D ID)
@@ -75,9 +77,7 @@ public class StockLevelTransaction {
                     rs = session.execute(checkIfItemBelowThresholdStatement.bind(W_ID, OL_I_ID, T));
                     List<Row> count = rs.all();
 
-                    int isBelowThreshold = count.get(0).getInt("count");
-
-                    if (isBelowThreshold == 1) {
+                    if (!count.isEmpty()) {
                         counter++;
                     }
                 }

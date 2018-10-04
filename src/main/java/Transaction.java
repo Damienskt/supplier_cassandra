@@ -1,3 +1,5 @@
+import java.math.BigDecimal;
+
 import com.datastax.driver.core.Cluster;
 import com.datastax.driver.core.ConsistencyLevel;
 import com.datastax.driver.core.QueryOptions;
@@ -71,7 +73,7 @@ public class Transaction {
         orderStatusTransaction.processOrderStatus(wId, dId, cId);
     }
 
-    public void processStockLevel(int wId, int dId, int T, int L) {
+    public void processStockLevel(int wId, int dId, BigDecimal T, int L) {
         stockLevelTransaction.processStockLevelTransaction(wId, dId, T, L);
     }
 }
