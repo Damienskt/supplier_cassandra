@@ -115,12 +115,14 @@ public class PaymentTransaction {
         //Update the warehouse C W ID by incrementing W YTD by PAYMENT
         BigDecimal W_YTD = warehouseRelation.getDecimal("W_YTD").add(paymentAmount);
         session.execute(updateWarehouseYTDStatement.bind(W_YTD, W_ID));
+        //System.out.println("Update Wh YTD: " + W_YTD + " " + W_ID);
     }
 
     private void updateDistrict(int D_W_ID, int D_ID, BigDecimal paymentAmount, Row districtRelation) {
         //Update the district (C W ID,C D ID) by incrementing D YTD by PAYMENT
         BigDecimal D_YTD = districtRelation.getDecimal("D_YTD").add(paymentAmount);
         session.execute(updateDistrictYTDStatement.bind(D_YTD, D_W_ID, D_ID));
+        //System.out.println("Update District YTD: " + D_YTD + " " + D_W_ID + " " + D_ID);
     }
 
     private void updateCustomer(int C_W_ID, int C_D_ID, int C_ID, BigDecimal paymentAmount,
@@ -143,19 +145,22 @@ public class PaymentTransaction {
 
         session.execute(updateCustomerByPaymentStatement.bind(C_BALANCE, C_YTD_PAYMENT, C_PAYMENT_CNT,
                 C_W_ID, C_D_ID, C_ID));
+        //System.out.println("Update Cust By Payment: "
+        //        + C_BALANCE + " " + C_YTD_PAYMENT + " " + C_PAYMENT_CNT + " "
+        //        + C_W_ID + " " + C_D_ID + " " + C_ID);
     }
 
     /* Output methods */
 
     private void outputPaymentTransactionResults(Row warehouse, Row district, Row customer,
                                                  float paymentAmount) {
-        printCustomerDetails(customer);
+        printCustomerDetails(customer, new BigDecimal(paymentAmount));
         printWarehouseAddress(warehouse);
         printDistrictAddress(district);
         printPaymentAmount(paymentAmount);
     }
 
-    private void printCustomerDetails(Row customer) {
+    private void printCustomerDetails(Row customer, BigDecimal paymentAmount) {
         System.out.println(String.format(MESSAGE_CUSTOMER,
                 customer.getInt("C_W_ID"),
                 customer.getInt("C_D_ID"),
@@ -177,7 +182,7 @@ public class PaymentTransaction {
                 customer.getString("C_CREDIT"),
                 customer.getDecimal("C_CREDIT_LIM"),
                 customer.getDecimal("C_DISCOUNT"),
-                customer.getDecimal("C_BALANCE")));
+                customer.getDecimal("C_BALANCE").subtract(paymentAmount)));
     }
 
     private void printWarehouseAddress(Row warehouse) {
