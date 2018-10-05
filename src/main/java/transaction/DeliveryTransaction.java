@@ -35,26 +35,26 @@ public class DeliveryTransaction {
     private static final String SELECT_ORDER_LINES =
             "SELECT OL_NUMBER, OL_AMOUNT "
                     + "FROM " + KEY_SPACE_WITH_DOT + Table.TABLE_ORDERLINE
-                    + "WHERE OL_W_ID = ? AND OL_D_ID = ? AND OL_O_ID = ?;";
+                    + " WHERE OL_W_ID = ? AND OL_D_ID = ? AND OL_O_ID = ?;";
 
     private static final String SELECT_CUSTOMER =
             "SELECT C_BALANCE, C_DELIVERY_CNT "
                     + "FROM " + KEY_SPACE_WITH_DOT + Table.TABLE_CUSTOMER
-                    + "WHERE C_W_ID = ? AND C_D_ID = ? AND C_ID = ?;";
+                    + " WHERE C_W_ID = ? AND C_D_ID = ? AND C_ID = ?;";
 
     private static final String UPDATE_CUSTOMER_BY_DELIVERY =
             "UPDATE " + KEY_SPACE_WITH_DOT + Table.TABLE_CUSTOMER
-                    + "SET C_BALANCE = ?, C_DELIVERY_CNT = ?, C_CARRIER_ID = ?"
-                    + "WHERE C_W_ID = ? AND C_D_ID = ? AND C_ID = ?;";
+                    + " SET C_BALANCE = ?, C_DELIVERY_CNT = ?"
+                    + " WHERE C_W_ID = ? AND C_D_ID = ? AND C_ID = ?;";
 
     private static final String UPDATE_ORDER_LINE =
             "UPDATE " + KEY_SPACE_WITH_DOT + Table.TABLE_ORDERLINE
-                    + "SET OL_DELIVERY_D = ? "
+                    + " SET OL_DELIVERY_D = ? "
                     + "WHERE OL_W_ID = ? AND OL_D_ID = ? AND OL_O_ID = ? AND OL_NUMBER = ?;";
 
     private static final String UPDATE_ORDERS =
             "UPDATE " + KEY_SPACE_WITH_DOT + Table.TABLE_ORDER
-                    + "SET O_CARRIER_ID = ? "
+                    + " SET O_CARRIER_ID = ? "
                     + "WHERE O_W_ID = ? AND O_D_ID = ? AND O_ID = ? AND O_C_ID = ?;";
 
     public DeliveryTransaction(Session session) {
@@ -80,7 +80,7 @@ public class DeliveryTransaction {
 
             BigDecimal sumOfAllOrderLinesAmount = selectAndUpdateOrderLines(W_ID, D_ID, O_ID, OL_DELIVERY_D);
             selectCustomer(W_ID, D_ID, O_C_ID);
-            updateCustomerByDelivery(W_ID, D_ID, O_C_ID, sumOfAllOrderLinesAmount, CARRIER_ID);
+            updateCustomerByDelivery(W_ID, D_ID, O_C_ID, sumOfAllOrderLinesAmount);
         }
     }
 
@@ -102,6 +102,8 @@ public class DeliveryTransaction {
             finalSum = finalSum.add(currentOLAmount);
 
             session.execute(updateOrderLineStatement.bind(OL_DELIVERY_D, W_ID, D_ID, O_ID, OL_NUMBER));
+            //System.out.println("Update Order Line: "
+            //        + OL_DELIVERY_D + " " + W_ID + " " + D_ID + " " + O_ID + " " + OL_NUMBER);
         }
 
         return finalSum;
@@ -115,14 +117,18 @@ public class DeliveryTransaction {
 
     private void updateOrderByCarrier(int O_W_ID, int O_D_ID, int O_C_ID, int O_ID, int CARRIER_ID) {
         session.execute(updateOrdersStatement.bind(CARRIER_ID, O_W_ID, O_D_ID, O_ID, O_C_ID));
+        //System.out.println("Update Order By Carrier: "
+        //        + O_W_ID + " " + O_D_ID + " " + O_C_ID + " " + O_ID + " " + CARRIER_ID);
     }
 
-    private void updateCustomerByDelivery(int C_W_ID, int C_D_ID, int C_ID, BigDecimal OL_AMOUNT_SUM, int CARRIER_ID) {
+    private void updateCustomerByDelivery(int C_W_ID, int C_D_ID, int C_ID, BigDecimal OL_AMOUNT_SUM) {
         // Increment C BALANCE by B, where B denote the sum of OL AMOUNT for all the items placed in order X
         BigDecimal C_BALANCE = selectedCustomer.getDecimal("C_BALANCE").add(OL_AMOUNT_SUM);
 
         // Increment C DELIVERY CNT by 1
         int C_DELIVERY_CNT = selectedCustomer.getInt("C_DELIVERY_CNT") + 1;
-        session.execute(updateCustomerByDeliveryStatement.bind(C_BALANCE, C_DELIVERY_CNT, CARRIER_ID, C_W_ID, C_D_ID, C_ID));
+        session.execute(updateCustomerByDeliveryStatement.bind(C_BALANCE, C_DELIVERY_CNT, C_W_ID, C_D_ID, C_ID));
+        //System.out.println("Update Customer By Delivery: "
+        //        + C_W_ID + " " + C_D_ID + " " + C_ID + " " + C_BALANCE + " " + C_DELIVERY_CNT);
     }
 }
