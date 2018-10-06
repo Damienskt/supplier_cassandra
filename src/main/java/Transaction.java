@@ -1,3 +1,5 @@
+import java.math.BigDecimal;
+
 import com.datastax.driver.core.Cluster;
 import com.datastax.driver.core.ConsistencyLevel;
 import com.datastax.driver.core.QueryOptions;
@@ -25,7 +27,7 @@ public class Transaction {
     private PaymentTransaction paymentTransaction;
     private DeliveryTransaction deliveryTransaction;
     private OrderStatusTransaction orderStatusTransaction;
-    //private StockLevelTransaction stockLevelTransaction;
+    private StockLevelTransaction stockLevelTransaction;
     //private PopularItemTransaction popularItemTransaction;
     private TopBalanceTransaction topBalanceTransaction;
     //private RelatedCustomerTransaction relatedCustomerTransaction;
@@ -48,7 +50,7 @@ public class Transaction {
         paymentTransaction = new PaymentTransaction(session);
         deliveryTransaction = new DeliveryTransaction(session);
         orderStatusTransaction = new OrderStatusTransaction(session);
-        //stockLevelTransaction = new StockLevelTransaction(session);
+        stockLevelTransaction = new StockLevelTransaction(session);
         //popularItemTransaction = new PopularItemTransaction(session);
         topBalanceTransaction = new TopBalanceTransaction(session);
         //relatedCustomerTransaction = new RelatedCustomerTransaction(session);
@@ -71,7 +73,12 @@ public class Transaction {
         orderStatusTransaction.processOrderStatus(wId, dId, cId);
     }
 
+<<<<<<< HEAD
     void processTopBalance() {
         topBalanceTransaction.calTopBalance();
+=======
+    public void processStockLevel(int wId, int dId, BigDecimal T, int L) {
+        stockLevelTransaction.processStockLevelTransaction(wId, dId, T, L);
+>>>>>>> 9efc646950cd61e00069067d2ba7ea80563ef662
     }
 }
