@@ -27,7 +27,7 @@ public class Transaction {
     private OrderStatusTransaction orderStatusTransaction;
     //private StockLevelTransaction stockLevelTransaction;
     //private PopularItemTransaction popularItemTransaction;
-    //private TopBalanceTransaction topBalanceTransaction;
+    private TopBalanceTransaction topBalanceTransaction;
     //private RelatedCustomerTransaction relatedCustomerTransaction;
 
     public Transaction(int index, String consistencyLevel) {
@@ -50,7 +50,7 @@ public class Transaction {
         orderStatusTransaction = new OrderStatusTransaction(session);
         //stockLevelTransaction = new StockLevelTransaction(session);
         //popularItemTransaction = new PopularItemTransaction(session);
-        //topBalanceTransaction = new TopBalanceTransaction(session);
+        topBalanceTransaction = new TopBalanceTransaction(session);
         //relatedCustomerTransaction = new RelatedCustomerTransaction(session);
     }
 
@@ -69,5 +69,9 @@ public class Transaction {
 
     public void processOrderStatus(int wId, int dId, int cId) {
         orderStatusTransaction.processOrderStatus(wId, dId, cId);
+    }
+
+    void processTopBalance() {
+        topBalanceTransaction.calTopBalance();
     }
 }
