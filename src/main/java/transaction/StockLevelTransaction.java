@@ -32,14 +32,14 @@ public class StockLevelTransaction {
                     + "AND OL_W_ID = ? "
                     + "AND OL_O_ID = ?;";
 
-    // If return some count item is below the threshold level
+    // Return the S_QUANTITY of the item
     private static final String CHECK_IF_ITEM_BELOW_THRESHOLD =
-            "SELECT COUNT(*) "
+            "SELECT S_QUANTITY "
                     + "FROM " + KEY_SPACE_WITH_DOT + Table.TABLE_STOCK
                     + " WHERE S_W_ID = ? "
-                    + "AND S_I_ID = ? "
-                    + "AND S_QUANTITY < ? "
-                    + "ALLOW FILTERING;";
+                    + "AND S_I_ID = ? ";
+                    //+ "AND S_QUANTITY < ? "
+                    //+ "ALLOW FILTERING;";
 
     public StockLevelTransaction(Session session) {
         this.session = session;
@@ -59,6 +59,8 @@ public class StockLevelTransaction {
             i.e., S QUANTITY < T
          */
 
+        // long startTime = System.currentTimeMillis();
+
         int D_NEXT_O_ID = -1;
         ResultSet rs = session.execute(selectDistrictNextOrderIdStatement.bind(W_ID, D_ID));
         List<Row> district = rs.all();
@@ -74,16 +76,23 @@ public class StockLevelTransaction {
             if (!itemSetS.isEmpty()) {
                 for (Row item: itemSetS) {
                     int OL_I_ID = item.getInt("OL_I_ID");
-                    rs = session.execute(checkIfItemBelowThresholdStatement.bind(W_ID, OL_I_ID, T));
+                    rs = session.execute(checkIfItemBelowThresholdStatement.bind(W_ID, OL_I_ID));
                     List<Row> count = rs.all();
 
                     if (!count.isEmpty()) {
-                        counter++;
+                        BigDecimal S_QUANTITY = count.get(0).getDecimal("S_QUANTITY");
+
+                        if (S_QUANTITY.compareTo(T) < 0 ) {
+                            // System.out.println(S_QUANTITY.intValue() + " " + T.intValue());
+                            counter++;
+                        }
                     }
                 }
             }
         }
 
-        System.out.println(counter);
+        System.out.println("Total number of items below threshold level of " + T + ": " + counter);
+        // long estimatedTime = System.currentTimeMillis() - startTime;
+        // System.out.println("Estimated time: " + estimatedTime + " ms");
     }
 }

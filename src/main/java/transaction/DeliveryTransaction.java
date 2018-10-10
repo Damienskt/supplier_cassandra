@@ -20,6 +20,7 @@ public class DeliveryTransaction {
     private PreparedStatement updateOrdersStatement;
     private PreparedStatement updateOrderLineStatement;
     private PreparedStatement updateCustomerByDeliveryStatement;
+    private  PreparedStatement updateCustomerOrderCarrierIdStatement;
 
     private Row selectedCustomer;
     private Row selectedMinimumOrder; // Oldest order not delivered
@@ -38,7 +39,7 @@ public class DeliveryTransaction {
                     + " WHERE OL_W_ID = ? AND OL_D_ID = ? AND OL_O_ID = ?;";
 
     private static final String SELECT_CUSTOMER =
-            "SELECT C_BALANCE, C_DELIVERY_CNT "
+            "SELECT C_BALANCE, C_DELIVERY_CNT, C_LAST_O_ID "
                     + "FROM " + KEY_SPACE_WITH_DOT + Table.TABLE_CUSTOMER
                     + " WHERE C_W_ID = ? AND C_D_ID = ? AND C_ID = ?;";
 
@@ -57,6 +58,11 @@ public class DeliveryTransaction {
                     + " SET O_CARRIER_ID = ? "
                     + "WHERE O_W_ID = ? AND O_D_ID = ? AND O_ID = ? AND O_C_ID = ?;";
 
+    private static final String UPDATE_CUSTOMER_O_C_ID =
+            "UPDATE " + KEY_SPACE_WITH_DOT + Table.TABLE_CUSTOMER
+                    + " SET C_O_CARRIER_ID = ? "
+                    + "WHERE C_W_ID = ? AND C_D_ID = ? AND C_ID = ?;";
+
     public DeliveryTransaction(Session session) {
         this.session = session;
         this.selectMinimumOrderStatement = session.prepare(SELECT_MINIMUM_ORDER);
@@ -65,6 +71,7 @@ public class DeliveryTransaction {
         this.updateOrdersStatement = session.prepare(UPDATE_ORDERS);
         this.updateOrderLineStatement = session.prepare(UPDATE_ORDER_LINE);
         this.updateCustomerByDeliveryStatement = session.prepare(UPDATE_CUSTOMER_BY_DELIVERY);
+        this.updateCustomerOrderCarrierIdStatement = session.prepare(UPDATE_CUSTOMER_O_C_ID);
     }
 
     public void processDeliveryTransaction(int W_ID, int CARRIER_ID) {
@@ -80,7 +87,7 @@ public class DeliveryTransaction {
 
             BigDecimal sumOfAllOrderLinesAmount = selectAndUpdateOrderLines(W_ID, D_ID, O_ID, OL_DELIVERY_D);
             selectCustomer(W_ID, D_ID, O_C_ID);
-            updateCustomerByDelivery(W_ID, D_ID, O_C_ID, sumOfAllOrderLinesAmount);
+            updateCustomerByDelivery(W_ID, D_ID, O_C_ID, sumOfAllOrderLinesAmount, O_ID, CARRIER_ID);
         }
     }
 
@@ -102,8 +109,8 @@ public class DeliveryTransaction {
             finalSum = finalSum.add(currentOLAmount);
 
             session.execute(updateOrderLineStatement.bind(OL_DELIVERY_D, W_ID, D_ID, O_ID, OL_NUMBER));
-            //System.out.println("Update Order Line: "
-            //        + OL_DELIVERY_D + " " + W_ID + " " + D_ID + " " + O_ID + " " + OL_NUMBER);
+            System.out.println("Update Order Line: "
+                   + OL_DELIVERY_D + " " + W_ID + " " + D_ID + " " + O_ID + " " + OL_NUMBER);
         }
 
         return finalSum;
@@ -117,18 +124,25 @@ public class DeliveryTransaction {
 
     private void updateOrderByCarrier(int O_W_ID, int O_D_ID, int O_C_ID, int O_ID, int CARRIER_ID) {
         session.execute(updateOrdersStatement.bind(CARRIER_ID, O_W_ID, O_D_ID, O_ID, O_C_ID));
-        //System.out.println("Update Order By Carrier: "
-        //        + O_W_ID + " " + O_D_ID + " " + O_C_ID + " " + O_ID + " " + CARRIER_ID);
+        System.out.println("Update Order By Carrier: "
+                + O_W_ID + " " + O_D_ID + " " + O_C_ID + " " + O_ID + " " + CARRIER_ID);
     }
 
-    private void updateCustomerByDelivery(int C_W_ID, int C_D_ID, int C_ID, BigDecimal OL_AMOUNT_SUM) {
+    private void updateCustomerByDelivery(int C_W_ID, int C_D_ID, int C_ID, BigDecimal OL_AMOUNT_SUM,
+                                          int currentDeliveredO_ID, int givenCARRIER_ID) {
         // Increment C BALANCE by B, where B denote the sum of OL AMOUNT for all the items placed in order X
         BigDecimal C_BALANCE = selectedCustomer.getDecimal("C_BALANCE").add(OL_AMOUNT_SUM);
 
         // Increment C DELIVERY CNT by 1
         int C_DELIVERY_CNT = selectedCustomer.getInt("C_DELIVERY_CNT") + 1;
         session.execute(updateCustomerByDeliveryStatement.bind(C_BALANCE, C_DELIVERY_CNT, C_W_ID, C_D_ID, C_ID));
-        //System.out.println("Update Customer By Delivery: "
-        //        + C_W_ID + " " + C_D_ID + " " + C_ID + " " + C_BALANCE + " " + C_DELIVERY_CNT);
+        System.out.println("Update Customer By Delivery: "
+                + C_W_ID + " " + C_D_ID + " " + C_ID + " " + C_BALANCE + " " + C_DELIVERY_CNT);
+
+        int C_LAST_O_ID = selectedCustomer.getInt("C_LAST_O_ID");
+        if (C_LAST_O_ID == currentDeliveredO_ID) {
+            session.execute(updateCustomerOrderCarrierIdStatement.bind(givenCARRIER_ID, C_W_ID, C_D_ID, C_ID));
+            System.out.println("Update C_O_CARRIER_ID : " + C_LAST_O_ID + " " + givenCARRIER_ID);
+        }
     }
 }
