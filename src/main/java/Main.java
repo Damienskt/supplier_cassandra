@@ -11,6 +11,7 @@ import transaction.NewOrderTransaction;
 import transaction.OrderStatusTransaction;
 import transaction.PaymentTransaction;
 import transaction.PopularItemTransaction;
+import transaction.RelatedCustomerTransaction;
 import transaction.StockLevelTransaction;
 import transaction.TopBalanceTransaction;
 
@@ -46,7 +47,7 @@ public class Main {
         PaymentTransaction pT = new PaymentTransaction(session);
         PopularItemTransaction pIT = new PopularItemTransaction(session);
         TopBalanceTransaction tBT = new TopBalanceTransaction(session);
-
+        RelatedCustomerTransaction rCT = new RelatedCustomerTransaction(session);
         //String pathTemplate = "../data/%d.txt";
         long[] transactionsTiming = new long[8];
         int[] transactionsExecutedCount = new int[8];
@@ -159,6 +160,19 @@ public class Main {
                         tBT.calTopBalance();
                         long endTime = System.nanoTime() - startTime;
                         updateTransactionDetail(6, endTime, transactionsTiming, transactionsExecutedCount);
+                    } catch (Exception e) {
+                        System.err.println(e.getMessage());
+                    }
+                } else if (input.charAt(0) == 'R') {
+                    int wId = Integer.parseInt(arguments[1]);
+                    int dId = Integer.parseInt(arguments[2]);
+                    int cId = Integer.parseInt(arguments[3]);
+
+                    try {
+                        startTime = System.nanoTime();
+                        rCT.relatedCustomer(wId, dId, cId);
+                        long endTime = System.nanoTime() - startTime;
+                        updateTransactionDetail(7, endTime, transactionsTiming, transactionsExecutedCount);
                     } catch (Exception e) {
                         System.err.println(e.getMessage());
                     }

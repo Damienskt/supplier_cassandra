@@ -196,6 +196,28 @@ public class Setup {
                 + " WITH CLUSTERING ORDER BY (C_BALANCE DESC)";
         session.execute(createCustomerBalancesViewCommand);
         System.out.println("Successfully created materialized view : " + Table.VIEW_CUSTOMER_BALANCES);
+
+        String createOrderedItemsViewCommand = "CREATE MATERIALIZED VIEW " + KEY_SPACE + "." + Table.VIEW_ORDERED_ITEMS + " AS "
+                + "SELECT OL_W_ID, OL_D_ID, OL_O_ID, OL_I_ID FROM " + KEY_SPACE + "." + Table.TABLE_ORDERLINE
+                + " WHERE OL_W_ID IS NOT NULL "
+                + "AND OL_D_ID IS NOT NULL "
+                + "AND OL_O_ID IS NOT NULL "
+                + "AND OL_NUMBER IS NOT NULL "
+                + "AND OL_I_ID IS NOT NULL "
+                + "PRIMARY KEY (OL_I_ID, OL_W_ID, OL_D_ID, OL_O_ID, OL_NUMBER);";
+        session.execute(createOrderedItemsViewCommand);
+        System.out.println("Successfully created materialized view : " + Table.VIEW_ORDERED_ITEMS);
+
+        String createOrderPartitionedByCustomerViewCommand = "CREATE MATERIALIZED VIEW " + KEY_SPACE + "."
+                + Table.VIEW_ORDER_PARTITIONED_BY_CUSTOMER + " AS "
+                + "SELECT O_W_ID, O_D_ID, O_ID, O_C_ID FROM " + KEY_SPACE + "." + Table.TABLE_ORDER
+                + " WHERE O_W_ID IS NOT NULL "
+                + "AND O_D_ID IS NOT NULL "
+                + "AND O_ID IS NOT NULL "
+                + "AND O_C_ID IS NOT NULL "
+                + "PRIMARY KEY (O_C_ID, O_W_ID, O_D_ID, O_ID);";
+        session.execute(createOrderPartitionedByCustomerViewCommand);
+        System.out.println("Successfully created materialized view : " + Table.VIEW_ORDER_PARTITIONED_BY_CUSTOMER);
     }
 
     private void loadData() {
