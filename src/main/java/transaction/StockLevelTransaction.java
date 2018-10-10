@@ -60,7 +60,7 @@ public class StockLevelTransaction {
          */
 
         // long startTime = System.currentTimeMillis();
-
+        counter = 0;
         int D_NEXT_O_ID = -1;
         ResultSet rs = session.execute(selectDistrictNextOrderIdStatement.bind(W_ID, D_ID));
         List<Row> district = rs.all();
