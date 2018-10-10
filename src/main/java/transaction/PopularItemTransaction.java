@@ -13,39 +13,52 @@ import java.text.SimpleDateFormat;
 import constant.Table;
 
 public class PopularItemTransaction {
-    private PreparedStatement selectLastOrdersStmt;
-    private PreparedStatement selectMaxQuantityStmt;
-    private PreparedStatement selectPopularItemStmt;
-    private PreparedStatement selectOrderWithItemStmt;
+    private PreparedStatement orderWithItemCql;
+    private PreparedStatement itemNameCql;
+    private PreparedStatement customerNameCql;
+    private PreparedStatement lastOrdersCql;
+    private PreparedStatement maxQuantityCql;
+    private PreparedStatement popularItemCql;
     private static final String KEY_SPACE_WITH_DOT = Table.KEY_SPACE + ".";
 
     private Session session;
     /* popular items */
     private static final String SELECT_LAST_ORDERS =
-            "SELECT o_id, o_c_id, o_entry_d, o_c_first, o_c_middle, o_c_last "
-                    + "FROM "+ KEY_SPACE_WITH_DOT +"orders_by_timestamp "
+            "SELECT o_id, o_c_id, o_entry_d "
+                    + "FROM "+ KEY_SPACE_WITH_DOT +"orders "
                     + "WHERE o_w_id = ? AND o_d_id = ? "
+                    + "ORDER BY o_id DESC "
                     + "LIMIT ? ALLOW FILTERING;";
     private static final String SELECT_MAX_QUANTITY =
             "SELECT MAX(ol_quantity) as ol_quantity "
-                    + "FROM "+ KEY_SPACE_WITH_DOT +"order_lines "
+                    + "FROM "+ KEY_SPACE_WITH_DOT +"order_line "
                     + "WHERE ol_w_id = ? AND ol_d_id = ? AND ol_o_id = ?;";
+    private static final String SELECT_ITEM_NAME =
+            "SELECT i_name "
+                    + "FROM "+ KEY_SPACE_WITH_DOT +"item "
+                    + "WHERE i_id = ?;";
+    private static final String SELECT_CUSTOMER_NAME =
+            "SELECT c_first, c_middle, c_last "
+                    + "FROM "+ KEY_SPACE_WITH_DOT +"customer "
+                    + "WHERE c_w_id = ? AND c_d_id = ? AND c_id = ?;";
     private static final String SELECT_POPULAR_ITEM =
-            "SELECT ol_i_id, ol_i_name, ol_quantity "
-                    + "FROM "+ KEY_SPACE_WITH_DOT +"order_lines "
+            "SELECT ol_i_id, ol_quantity "
+                    + "FROM "+ KEY_SPACE_WITH_DOT +"order_line "
                     + "WHERE ol_w_id = ? AND ol_d_id = ? AND ol_o_id = ? AND ol_quantity = ? ALLOW FILTERING;";
     private static final String SELECT_ORDER_WITH_ITEM =
             "SELECT * "
-                    + "FROM order_lines "
+                    + "FROM "+ KEY_SPACE_WITH_DOT +"order_line "
                     + "WHERE ol_w_id = ? AND ol_d_id = ? AND ol_o_id = ? AND ol_i_id = ? ALLOW FILTERING;";
 
-    PopularItemTransaction(Session session) {
+    public PopularItemTransaction(Session session) {
         this.session = session;
         /* popular items */
-        selectLastOrdersStmt = session.prepare(SELECT_LAST_ORDERS);
-        selectMaxQuantityStmt = session.prepare(SELECT_MAX_QUANTITY);
-        selectPopularItemStmt = session.prepare(SELECT_POPULAR_ITEM);
-        selectOrderWithItemStmt = session.prepare(SELECT_ORDER_WITH_ITEM);
+        orderWithItemCql = session.prepare(SELECT_ORDER_WITH_ITEM);
+        itemNameCql = session.prepare(SELECT_ITEM_NAME);
+        customerNameCql = session.prepare(SELECT_CUSTOMER_NAME);
+        lastOrdersCql = session.prepare(SELECT_LAST_ORDERS);
+        maxQuantityCql = session.prepare(SELECT_MAX_QUANTITY);
+        popularItemCql = session.prepare(SELECT_POPULAR_ITEM);
     }
 
     /* Start of public methods */
@@ -57,7 +70,7 @@ public class PopularItemTransaction {
      * @param numOfOrders : number of lastest order to be considered
      */
 
-    void popularItem(int wId, int dId, int numOfOrders) {
+    public void popularItem(int wId, int dId, int numOfOrders) {
         List<Row> lastOrders = selectLastOrders(wId, dId, numOfOrders);
         int num = lastOrders.size();
 //        List<Row> customers = new List();
@@ -77,7 +90,8 @@ public class PopularItemTransaction {
                 //System.out.println("itemId " + itemId);
                 if (!popularItems.contains(itemId)) {
                     popularItems.add(itemId);
-                    popularItemName.add(item.getString("ol_i_name"));
+                    String item_name = getItemName(itemId);
+                    popularItemName.add(item_name);
                 }
             }
         }
@@ -90,15 +104,15 @@ public class PopularItemTransaction {
 //            itemName[i] = getItemName(itemId);
             percentage[i] = getPercentage(wId, dId, lastOrders, itemId);
         }
-        //outputPopularItems(wId, dId, numOfOrders, lastOrders, popularItemOfOrder,
-        //        popularItemName, percentage);
+        outputPopularItems(wId, dId, numOfOrders, lastOrders, popularItemOfOrder,
+                popularItemName, percentage);
     }
 
 
     /*  End of public methods */
     /*  popular items */
     private List<Row> selectLastOrders(final int wId, final int dId, final int numOfOrders) {
-        ResultSet resultSet = session.execute(selectLastOrdersStmt.bind(wId, dId, numOfOrders));
+        ResultSet resultSet = session.execute(lastOrdersCql.bind(wId, dId, numOfOrders));
         List<Row> lastOrders = resultSet.all();
         return lastOrders;
     }
@@ -113,16 +127,16 @@ public class PopularItemTransaction {
 //    }
 
     private List<Row> getPopularItem(final int wId, final int dId, final int orderId) {
-        ResultSet resultSet1 = session.execute(selectMaxQuantityStmt.bind(wId, dId, orderId));
+        ResultSet resultSet1 = session.execute(maxQuantityCql.bind(wId, dId, orderId));
         BigDecimal maxQuantity= (resultSet1.all()).get(0).getDecimal("ol_quantity");
 
-        ResultSet resultSet2 = session.execute(selectPopularItemStmt.bind(wId, dId, orderId, maxQuantity));
+        ResultSet resultSet2 = session.execute(popularItemCql.bind(wId, dId, orderId, maxQuantity));
         List<Row> popularItem = resultSet2.all();
         return popularItem;
     }
 
 //    private void getItemName(final int itemId){
-//        ResultSet resultSet = session.execute(selectItemName.bind(itemId);
+//        ResultSet resultSet = session.execute(itemNameCql.bind(itemId);
 //        List<Row> itemName = resultSet.all();
 //        return itemName.get(0);
 //    }
@@ -131,7 +145,7 @@ public class PopularItemTransaction {
         int count = 0;
         for (int i = 0; i < lastOrders.size(); i++) {
             int orderId = lastOrders.get(i).getInt("o_id");
-            ResultSet resultSet = session.execute(selectOrderWithItemStmt.bind(wId, dId, orderId, itemId));
+            ResultSet resultSet = session.execute(orderWithItemCql.bind(wId, dId, orderId, itemId));
             List<Row> result = resultSet.all();
             if (!result.isEmpty()){
                 count++;
@@ -142,6 +156,17 @@ public class PopularItemTransaction {
         return count;
 
     }
+    private String getItemName(int item_id) {
+        ResultSet resultSet2 = session.execute(itemNameCql.bind(item_id));
+        List<Row> result = resultSet2.all();
+        //System.out.println("item_name: "+result.get(0).getString("i_name"));
+        return result.get(0).getString("i_name");
+    }
+    private List<Row> getCustomerName (int w_id, int d_id, int c_id) {
+        ResultSet resultSet = session.execute(customerNameCql.bind(w_id,d_id,c_id));
+        List<Row> result = resultSet.all();
+        return result;
+    }
 
     private void outputPopularItems(final int wId, final int dId, final int numOfOrders, List<Row> lastOrders,
                                     List<List<Row>> popularItemOfOrder, List<String> popularItemName, int[] percentage){
@@ -149,14 +174,17 @@ public class PopularItemTransaction {
         System.out.println("number of orders been examined: " + numOfOrders);
         for (int i = 0; i < numOfOrders; i++) {
             Row order = lastOrders.get(i);
+            int c_id = order.getInt("o_c_id");
+            Row customerName = getCustomerName(wId,dId,c_id).get(0);
             System.out.println("order Id: " + order.getInt("o_id"));
             SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss"); //Or whatever format fits best your needs.
             String dateStr = sdf.format(order.getTimestamp("o_entry_d"));
             System.out.println("entry date and time: " + dateStr);
-            System.out.println("customer name: " + order.getString("o_c_first") + " "
-                    + order.getString("o_c_middle") + " " + order.getString("o_c_last"));
+            System.out.println("customer name: " + customerName.getString("c_first") + " "
+                    + customerName.getString("c_middle") + " " + customerName.getString("c_last"));
             for (Row pitem: popularItemOfOrder.get(i)) {
-                System.out.println("item name: " + pitem.getString("ol_i_name"));
+                int itemId = pitem.getInt("ol_i_id");
+                System.out.println("item name: " + getItemName(itemId));
                 System.out.println("item quantity: " + (pitem.getDecimal("ol_quantity")).intValue());
             }
         }

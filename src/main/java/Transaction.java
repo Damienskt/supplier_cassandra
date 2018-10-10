@@ -73,12 +73,11 @@ public class Transaction {
         orderStatusTransaction.processOrderStatus(wId, dId, cId);
     }
 
-<<<<<<< HEAD
     void processTopBalance() {
         topBalanceTransaction.calTopBalance();
-=======
+    }
+
     public void processStockLevel(int wId, int dId, BigDecimal T, int L) {
         stockLevelTransaction.processStockLevelTransaction(wId, dId, T, L);
->>>>>>> 9efc646950cd61e00069067d2ba7ea80563ef662
     }
 }
