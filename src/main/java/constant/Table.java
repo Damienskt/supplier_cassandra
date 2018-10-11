@@ -32,6 +32,9 @@ public class Table {
 
     public static final String KEY_SPACE = "wholesale_supplier";
 
+    public static final String[] IP_ADDRESSES = {"192.168.48.239","192.168.48.240","192.168.48.241",
+            "192.168.48.242","192.168.48.243"};
+
     public static String getCreateTableSuccessMessage(String tableName) {
         return "Successfully created table : " + tableName;
     }
