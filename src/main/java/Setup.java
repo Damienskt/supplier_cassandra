@@ -14,7 +14,7 @@ import com.datastax.driver.core.Session;
 import constant.Table;
 
 public class Setup {
-    static final String[] CONTACT_POINTS = {"localhost"};
+    static final String[] CONTACT_POINTS = Table.IP_ADDRESSES;
     static final String KEY_SPACE = Table.KEY_SPACE;
     static final int REPLICATION_FACTOR = 3;
 
