@@ -28,9 +28,9 @@ public class Transaction {
     private DeliveryTransaction deliveryTransaction;
     private OrderStatusTransaction orderStatusTransaction;
     private StockLevelTransaction stockLevelTransaction;
-    //private PopularItemTransaction popularItemTransaction;
+    private PopularItemTransaction popularItemTransaction;
     private TopBalanceTransaction topBalanceTransaction;
-    //private RelatedCustomerTransaction relatedCustomerTransaction;
+    private RelatedCustomerTransaction relatedCustomerTransaction;
 
     public Transaction(int index, String consistencyLevel) {
         QueryOptions queryOptions;
@@ -51,21 +51,21 @@ public class Transaction {
         deliveryTransaction = new DeliveryTransaction(session);
         orderStatusTransaction = new OrderStatusTransaction(session);
         stockLevelTransaction = new StockLevelTransaction(session);
-        //popularItemTransaction = new PopularItemTransaction(session);
+        popularItemTransaction = new PopularItemTransaction(session);
         topBalanceTransaction = new TopBalanceTransaction(session);
-        //relatedCustomerTransaction = new RelatedCustomerTransaction(session);
+        relatedCustomerTransaction = new RelatedCustomerTransaction(session);
     }
 
-    public void processNewOrder(int cId, int wId, int dId, int numItems,
+    public void processNewOrder(int wId, int dId, int cId, int numItems,
             int[] itemNum, int[] supplierWarehouse, int[] qty) {
         newOrderTransaction.processOrder(wId, dId, cId, numItems, itemNum, supplierWarehouse, qty);
     }
 
-    void processPayment(int wId, int dId, int cId, float payment) {
+    public void processPayment(int wId, int dId, int cId, float payment) {
         paymentTransaction.processPaymentTransaction(wId, dId, cId, payment);
     }
 
-    void processDelivery(int wId, int carrierId) {
+    public void processDelivery(int wId, int carrierId) {
         deliveryTransaction.processDeliveryTransaction(wId, carrierId);
     }
 
@@ -73,11 +73,19 @@ public class Transaction {
         orderStatusTransaction.processOrderStatus(wId, dId, cId);
     }
 
-    void processTopBalance() {
+    public void processStockLevel(int wId, int dId, BigDecimal T, int L) {
+        stockLevelTransaction.processStockLevelTransaction(wId, dId, T, L);
+    }
+
+    public void processPopularItem(int wId, int dId, int L) {
+        popularItemTransaction.popularItem(wId, dId, L);
+    }
+
+    public void processTopBalance() {
         topBalanceTransaction.calTopBalance();
     }
 
-    public void processStockLevel(int wId, int dId, BigDecimal T, int L) {
-        stockLevelTransaction.processStockLevelTransaction(wId, dId, T, L);
+    public void processRelatedCustomer(int wId, int dId, int cId) {
+        relatedCustomerTransaction.relatedCustomer(wId, dId, cId);
     }
 }
