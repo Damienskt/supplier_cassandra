@@ -30,6 +30,8 @@ public class Table {
     public static final String FILE_ORDERLINE = "order-line";
     public static final String FILE_STOCK = "stock";
 
+    public static final String PERFORMANCE_OUTPUT_PATH = "performance_output.txt";
+
     public static final String KEY_SPACE = "wholesale_supplier";
 
     public static final String[] IP_ADDRESSES = {"192.168.48.239","192.168.48.240","192.168.48.241",
