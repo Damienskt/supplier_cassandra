@@ -63,7 +63,7 @@ public class Main {
         int[] transactionsExecutedCount = new int[8];
         long startTime;
         for (int index = 0; index < numberOfClients; index++) {
-            File file = new File(Table.getTransactionFileLocation(index));
+            File file = new File(Table.getTransactionFileLocation(index+1));
             Transaction transaction = new Transaction(index, this.consistencyLevel);
             try {
                 BufferedReader reader = new BufferedReader(new FileReader(file));
