@@ -1,7 +1,17 @@
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileReader;
+import java.io.PrintWriter;
 import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 import com.datastax.driver.core.Cluster;
 import com.datastax.driver.core.Session;
@@ -44,200 +54,111 @@ public class Main {
     }
 
     public void executeQueries() {
-        // Initialize connector
-        //Cluster cluster = Cluster.builder().addContactPoints("localhost").build();
-        //Session session = cluster.connect();
+        ExecutorService executorService = Executors.newFixedThreadPool(Math.max(1, numberOfClients));
+        List<Future<ClientStatistics>> results = new ArrayList();
 
-        // Initialize all transactions
-        /*NewOrderTransaction nOT = new NewOrderTransaction(session);
-        OrderStatusTransaction oST = new OrderStatusTransaction(session);
-        DeliveryTransaction dT = new DeliveryTransaction(session);
-        StockLevelTransaction sLT = new StockLevelTransaction(session);
-        PaymentTransaction pT = new PaymentTransaction(session);
-        PopularItemTransaction pIT = new PopularItemTransaction(session);
-        TopBalanceTransaction tBT = new TopBalanceTransaction(session);
-        RelatedCustomerTransaction rCT = new RelatedCustomerTransaction(session);*/
-        //String pathTemplate = "../data/%d.txt";
-
-        long[] transactionsTiming = new long[8];
-        int[] transactionsExecutedCount = new int[8];
-        long startTime;
         for (int index = 0; index < numberOfClients; index++) {
-            File file = new File(Table.getTransactionFileLocation(index+1));
-            Transaction transaction = new Transaction(index, this.consistencyLevel);
+            Future<ClientStatistics> future = executorService.submit(new ClientThread(index, consistencyLevel));
+            results.add(future);
+        }
+
+        Map<Integer, ClientStatistics> statisticsMap = new HashMap();
+        for (Future<ClientStatistics> future : results) {
             try {
-                BufferedReader reader = new BufferedReader(new FileReader(file));
-                String input = reader.readLine();
-
-                while (input != null && input.length() > 0) {
-                    String[] arguments = input.split(",");
-
-                    if (input.charAt(0) == 'N') {
-                        int cId = Integer.parseInt(arguments[1]);
-                        int wId = Integer.parseInt(arguments[2]);
-                        int dId = Integer.parseInt(arguments[3]);
-                        int numItems = Integer.parseInt(arguments[4]);
-                        int[] itemNumbers = new int[numItems];
-                        int[] supplierWarehouse = new int[numItems];
-                        int[] quantity = new int[numItems];
-
-                        String newInputLine;
-                        String[] newArguments;
-                        for (int j = 0; j < numItems; j++) {
-                            newInputLine = reader.readLine();
-                            newArguments = newInputLine.split(",");
-
-                            itemNumbers[j] = Integer.parseInt(newArguments[0]);
-                            supplierWarehouse[j] = Integer.parseInt(newArguments[1]);
-                            quantity[j] = Integer.parseInt(newArguments[2]);
-                        }
-
-                        try {
-                            startTime = System.nanoTime();
-                            transaction.processNewOrder(wId, dId, cId, numItems, itemNumbers, supplierWarehouse, quantity);
-                            long endTime = System.nanoTime() - startTime;
-                            updateTransactionDetail(0, endTime, transactionsTiming, transactionsExecutedCount);
-                        } catch (Exception e) {
-                            System.err.println(e.getMessage());
-                        }
-                    } else if (input.charAt(0) == 'P') {
-                        int wId = Integer.parseInt(arguments[1]);
-                        int dId = Integer.parseInt(arguments[2]);
-                        int cId = Integer.parseInt(arguments[3]);
-                        float payment = Float.parseFloat(arguments[4]);
-
-                        try {
-                            startTime = System.nanoTime();
-                            transaction.processPayment(wId, dId, cId, payment);
-                            long endTime = System.nanoTime() - startTime;
-                            updateTransactionDetail(1, endTime, transactionsTiming, transactionsExecutedCount);
-                        } catch (Exception e) {
-                            System.err.println(e.getMessage());
-                        }
-                    } else if (input.charAt(0) == 'D') {
-                        int wId = Integer.parseInt(arguments[1]);
-                        int carrierId = Integer.parseInt(arguments[2]);
-
-                        try {
-                            startTime = System.nanoTime();
-                            transaction.processDelivery(wId, carrierId);
-                            long endTime = System.nanoTime() - startTime;
-                            updateTransactionDetail(2, endTime, transactionsTiming, transactionsExecutedCount);
-                        } catch (Exception e) {
-                            System.err.println(e.getMessage());
-                        }
-                    } else if (input.charAt(0) == 'O') { // Order Status
-                        int wId = Integer.parseInt(arguments[1]);
-                        int dId = Integer.parseInt(arguments[2]);
-                        int cId = Integer.parseInt(arguments[3]);
-
-                        try {
-                            startTime = System.nanoTime();
-                            transaction.processOrderStatus(wId, dId, cId);
-                            long endTime = System.nanoTime() - startTime;
-                            updateTransactionDetail(3, endTime, transactionsTiming, transactionsExecutedCount);
-                        } catch (Exception e) {
-                            System.err.println(e.getMessage());
-                        }
-                    } else if (input.charAt(0) == 'S') {
-                        int wId = Integer.parseInt(arguments[1]);
-                        int dId = Integer.parseInt(arguments[2]);
-                        int T = Integer.parseInt(arguments[3]);
-                        int L = Integer.parseInt(arguments[4]);
-
-                        try {
-                            startTime = System.nanoTime();
-                            transaction.processStockLevel(wId, dId, new BigDecimal(T), L);
-                            long endTime = System.nanoTime() - startTime;
-                            updateTransactionDetail(4, endTime, transactionsTiming, transactionsExecutedCount);
-                        } catch (Exception e) {
-                            System.err.println(e.getMessage());
-                        }
-                    } else if (input.charAt(0) == 'I') {
-                        int wId = Integer.parseInt(arguments[1]);
-                        int dId = Integer.parseInt(arguments[2]);
-                        int L = Integer.parseInt(arguments[3]);
-
-                        try {
-                            startTime = System.nanoTime();
-                            transaction.processPopularItem(wId, dId, L);
-                            long endTime = System.nanoTime() - startTime;
-                            updateTransactionDetail(5, endTime, transactionsTiming, transactionsExecutedCount);
-                        } catch (Exception e) {
-                            System.err.println(e.getMessage());
-                        }
-                    } else if (input.charAt(0) == 'T') {
-                        try {
-                            startTime = System.nanoTime();
-                            transaction.processTopBalance();
-                            long endTime = System.nanoTime() - startTime;
-                            updateTransactionDetail(6, endTime, transactionsTiming, transactionsExecutedCount);
-                        } catch (Exception e) {
-                            System.err.println(e.getMessage());
-                        }
-                    } else if (input.charAt(0) == 'R') {
-                        int wId = Integer.parseInt(arguments[1]);
-                        int dId = Integer.parseInt(arguments[2]);
-                        int cId = Integer.parseInt(arguments[3]);
-
-                        try {
-                            startTime = System.nanoTime();
-                            transaction.processRelatedCustomer(wId, dId, cId);
-                            long endTime = System.nanoTime() - startTime;
-                            updateTransactionDetail(7, endTime, transactionsTiming, transactionsExecutedCount);
-                        } catch (Exception e) {
-                            System.err.println(e.getMessage());
-                        }
-                    } else {
-                        System.err.println("\n\nOops, the application encountered an error in reading file.\n\n");
-                    }
-                    System.out.println();
-                    input = reader.readLine();
-                }
-
-                reader.close();
-            } catch (Exception e) {
+                ClientStatistics statistics = future.get();
+                statisticsMap.put(statistics.getIndex(), statistics);
+            } catch (InterruptedException e) {
                 e.printStackTrace();
-            }
-        }
-        //session.close();
-
-        float totalTime = (float)0.0;
-        float duration;
-        float throughput;
-        int totalTransactionExecuted = 0;
-        for (int i = 0; i < 8; i++) {
-            if (transactionsExecutedCount[i] > 0) {
-                duration = (float) transactionsTiming[i] / 1000000000;
-                throughput = (float) (transactionsExecutedCount[i]) / duration;
-                totalTime = totalTime + duration;
-                totalTransactionExecuted = totalTransactionExecuted + transactionsExecutedCount[i];
-
-                printIndividualTransactionResult(i, transactionsExecutedCount, duration, throughput);
+                return;
+            } catch (ExecutionException e) {
+                e.printStackTrace();
+                return;
             }
         }
 
-        throughput = (float)totalTransactionExecuted / totalTime;
-        printOverallTransactionResult(totalTransactionExecuted, totalTime, throughput);
+        outputPerformanceResults(statisticsMap);
+        System.out.println("\nAll " + numberOfClients + " clients have completed their transactions.");
     }
 
-    private void updateTransactionDetail(int index, long endTime, long[] transactionsTiming,
-                                         int[] transactionsExecutedCount) {
-        transactionsTiming[index] = transactionsTiming[index] + endTime;
-        transactionsExecutedCount[index] = transactionsExecutedCount[index] + 1;
-    }
+    private void outputPerformanceResults(Map<Integer, ClientStatistics> statisticsMap) {
+        int numClients = statisticsMap.size();
+        String outputPath = Table.PERFORMANCE_OUTPUT_PATH;
 
-    private void printIndividualTransactionResult(int i, int[] transactionsExecutedCount, float duration,
-                                                  float throughput) {
-        System.out.printf("Transaction %d total transactions: %d \n", i, transactionsExecutedCount[i]);
-        System.out.printf("Transaction %d time used: %f s \n", i, duration);
-        System.out.printf("Transaction %d's Throughput: %f \n", i, throughput);
-    }
+        try {
+            PrintWriter out = new PrintWriter(outputPath);
+            ClientStatistics min = statisticsMap.get(0);
+            ClientStatistics max = statisticsMap.get(0);
+            double totalThroughput = 0;
+            for (ClientStatistics current : statisticsMap.values()) {
+                double currentThroughput = current.getThroughput();
+                totalThroughput += currentThroughput;
+                if (currentThroughput < min.getThroughput()) {
+                    min = current;
+                } else if (currentThroughput > max.getThroughput()) {
+                    max = current;
+                }
+            }
 
-    private void printOverallTransactionResult(int totalTransactionExecuted, float totalTime,
-                                               float throughput) {
-        System.out.printf("Total Transactions executed: %d \n", totalTransactionExecuted);
-        System.out.printf("Total Time used: %fs \n", totalTime);
-        System.out.printf("Aggregated Throughput: %f \n", throughput);
+            // Output statistics of each client:
+            for (int i = 0; i < numClients; i++) {
+                ClientStatistics stats = statisticsMap.get(i);
+                int index = i + 1;
+                long totalTransactionCount = stats.getTotalTransactionCount();
+                double totalExecutionTime = (double) stats.getTotalExecutionTime() / 1000000000;
+                double throughput = stats.getThroughput();
+
+                long[] transactionCountStats = stats.getAllTransactionCount();
+                long[] executionTimeStats = stats.getAllExecutionTime();
+
+                long newOrderTransactionCount = transactionCountStats[0];
+                long paymentTransactionCount = transactionCountStats[1];
+                long deliveryTransactionCount = transactionCountStats[2];
+                long orderStatusTransactionCount = transactionCountStats[3];
+                long stockLevelTransactionCount = transactionCountStats[4];
+                long popularItemTransactionCount = transactionCountStats[5];
+                long topBalanceTransactionCount = transactionCountStats[6];
+                long relatedCustomerTransactionCount = transactionCountStats[7];
+
+                double newOrderExecutionTime = (double) executionTimeStats[0] / 1000000000;
+                double paymentExecutionTime = (double) executionTimeStats[1] / 1000000000;
+                double deliveryExecutionTime = (double) executionTimeStats[2] / 1000000000;
+                double orderStatusExecutionTime = (double) executionTimeStats[3] / 1000000000;
+                double stockLevelExecutionTime = (double) executionTimeStats[4] / 1000000000;
+                double popularItemExecutionTime = (double) executionTimeStats[5] / 1000000000;
+                double topBalanceExecutionTime = (double) executionTimeStats[6] / 1000000000;
+                double relatedCustomerExecutionTime = (double) executionTimeStats[7] / 1000000000;
+
+                out.println("Performance measure for client with index: " + index);
+                out.println("Total Number of Executed Transactions: " + totalTransactionCount);
+                out.println("Total Execution Time: " + totalExecutionTime);
+                out.println("Transaction throughput: " + throughput);
+                out.println("-------------------------------------");
+                out.println("New Order: " + newOrderTransactionCount + " " + newOrderExecutionTime);
+                out.println("Payment: " + paymentTransactionCount + " " + paymentExecutionTime);
+                out.println("Delivery Status: " + deliveryTransactionCount + " " + deliveryExecutionTime);
+                out.println("Order Status: " + orderStatusTransactionCount + " " + orderStatusExecutionTime);
+                out.println("Stock Level: " + stockLevelTransactionCount + " " + stockLevelExecutionTime);
+                out.println("Popular Item: " + popularItemTransactionCount + " " + popularItemExecutionTime);
+                out.println("Top Balance: " + topBalanceTransactionCount + " " + topBalanceExecutionTime);
+                out.println("Related Customer: " + relatedCustomerTransactionCount + " " + relatedCustomerExecutionTime);
+                out.println("=========================================");
+                out.println();
+            }
+
+            out.println("== End of Performance Measure for each Client ==");
+            out.println();
+
+            // Output minimum, maximum and average throughput
+            out.println("Minimum transaction throughput is the client with index " + (min.getIndex() + 1)
+                + " with throughput: " + min.getThroughput());
+            out.println("Minimum transaction throughput is the client with index " + (min.getIndex() + 1)
+                    + " with throughput: " + min.getThroughput());
+            out.println("Average transaction throughput is: " + (totalThroughput / numClients));
+
+            out.close();
+        } catch (FileNotFoundException e) {
+            System.out.println("Error in outputting performance results.");
+            e.printStackTrace();
+        }
     }
 }
