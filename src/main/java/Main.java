@@ -1,9 +1,5 @@
-import java.io.BufferedReader;
-import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.FileReader;
 import java.io.PrintWriter;
-import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -13,18 +9,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
-import com.datastax.driver.core.Cluster;
-import com.datastax.driver.core.Session;
-
 import constant.Table;
-import transaction.DeliveryTransaction;
-import transaction.NewOrderTransaction;
-import transaction.OrderStatusTransaction;
-import transaction.PaymentTransaction;
-import transaction.PopularItemTransaction;
-import transaction.RelatedCustomerTransaction;
-import transaction.StockLevelTransaction;
-import transaction.TopBalanceTransaction;
 
 public class Main {
     private int numberOfClients;
