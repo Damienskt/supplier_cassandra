@@ -47,6 +47,10 @@ public class Table {
         return "data/" + fileNameWithoutExtension + ".csv";
     }
 
+    public static String getTransactionFileLocation(int fileNameWithoutExtension) {
+        return "xact/" + fileNameWithoutExtension + ".txt";
+    }
+
     public static String getLoadingErrorMessage(String tableName) {
         return "Error loading " + tableName + " data : ";
     }
