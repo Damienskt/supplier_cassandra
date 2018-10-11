@@ -31,7 +31,7 @@ public class DeliveryTransaction {
             "SELECT O_ID, O_C_ID, O_ENTRY_D"
                     + " FROM " + KEY_SPACE_WITH_DOT + Table.TABLE_ORDER
                     + " WHERE O_W_ID = ? AND O_D_ID = ? AND O_CARRIER_ID = -1" // need to check the null value
-                    + " ORDER BY O_ID ASC LIMIT 1 ALLOW FILTERING;";
+                    + " LIMIT 1 ALLOW FILTERING;"; //" ORDER BY O_ID ASC LIMIT 1 ALLOW FILTERING;"
 
     private static final String SELECT_ORDER_LINES =
             "SELECT OL_NUMBER, OL_AMOUNT "
@@ -80,6 +80,7 @@ public class DeliveryTransaction {
 
             int O_ID = selectedMinimumOrder.getInt("O_ID");
             int O_C_ID = selectedMinimumOrder.getInt("O_C_ID");
+            // System.out.println("D_ID: " + D_ID + " MIN ORDER: " + O_ID + " " + O_C_ID);
             updateOrderByCarrier(W_ID, D_ID, O_C_ID, O_ID, CARRIER_ID);
 
             // Get current date and time
