@@ -33,7 +33,7 @@ public class RelatedCustomerTransaction {
             "SELECT o_id "
                     + "FROM "+ KEY_SPACE_WITH_DOT + "order_partitioned_by_customer "
                     + "WHERE o_w_id=? AND o_d_id=? AND o_c_id = ?;";
-    private static final String CUST_ID_QUERY = //retrieve order by main customer
+    private static final String CUST_ID_QUERY = //retrieve c_id from order
             "SELECT o_c_id "
                     + "FROM "+ KEY_SPACE_WITH_DOT + "orders "
                     + "WHERE o_w_id=? AND o_d_id=? AND o_id = ?;";
@@ -52,10 +52,11 @@ public class RelatedCustomerTransaction {
         HashMap <Integer,Integer> customerWithItem = new HashMap<Integer, Integer>();
         HashMap <Integer,ArrayList<Integer>> keyToCust = new HashMap<Integer, ArrayList<Integer>>();
         for(Row orderid : orderIDs) {
+
             System.out.println("orderId: " + orderid.getInt("o_id"));
             ResultSet resultSet = session.execute(itemsOfCustCql.bind(w_id,d_id, orderid.getInt("o_id"))); //get all items for each order made by the main customer
             itemsByCust = resultSet.all();
-            for(Row item : itemsByCust){//for each order use all item id to get other customers
+            for(Row item : itemsByCust){//for each order use all item id to get other customers (based on w o and d)
                 ResultSet resultSet1 = session.execute(custWithItemCql.bind(item.getInt("ol_i_id")));
                 List<Row> custList = resultSet1.all();
                 for(Row cusN : custList) {
