@@ -215,7 +215,7 @@ public class Setup {
                 + "AND O_D_ID IS NOT NULL "
                 + "AND O_ID IS NOT NULL "
                 + "AND O_C_ID IS NOT NULL "
-                + "PRIMARY KEY (O_C_ID, O_W_ID, O_D_ID, O_ID);";
+                + "PRIMARY KEY ((O_C_ID, O_W_ID, O_D_ID), O_ID);";
         session.execute(createOrderPartitionedByCustomerViewCommand);
         System.out.println("Successfully created materialized view : " + Table.VIEW_ORDER_PARTITIONED_BY_CUSTOMER);
     }
