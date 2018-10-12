@@ -45,12 +45,12 @@ public class TopBalanceTransaction {
 
     /* Start of public methods */
     public void calTopBalance() {
-        ResultSet resultSet = session.execute(topBalanceCql.bind());
-        List<Row> customerNames = new ArrayList();
+        ResultSet resultSet = session.execute(topBalanceCql.bind()); //get the top 10 customer with highest balance
+        List<Row> customerNames = new ArrayList(); 
         List<Row> topCustomers = resultSet.all();
         for(Row cus: topCustomers){
             ResultSet customerName = session.execute(customerNameCql.bind(cus.getInt("c_w_id"),
-                    cus.getInt("c_d_id"), cus.getInt("c_id")));
+                    cus.getInt("c_d_id"), cus.getInt("c_id"))); //retrieve each customer name for output
             Row cusN = (customerName.all()).get(0);
             customerNames.add(cusN);
         }
