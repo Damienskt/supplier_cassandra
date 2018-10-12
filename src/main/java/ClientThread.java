@@ -10,15 +10,19 @@ public class ClientThread implements Callable<ClientStatistics> {
     private int index;
     private String consistencyLevel;
     private Transaction transaction;
+    static String[] CONTACT_POINTS = null;
+    static String KEY_SPACE = "";
 
-    public ClientThread (int index, String consistencyLevel) {
+    public ClientThread (int index, String consistencyLevel, String[] contactPoints, String keySpace) {
         this.index = index;
         this.consistencyLevel = consistencyLevel;
+        this.CONTACT_POINTS = contactPoints;
+        this.KEY_SPACE = keySpace;
     }
 
     public ClientStatistics readTransaction() {
         File file = new File(Table.getTransactionFileLocation(index+1));
-        transaction = new Transaction(index, this.consistencyLevel);
+        transaction = new Transaction(index, this.consistencyLevel, this.CONTACT_POINTS, this.KEY_SPACE);
         long[] transactionCount = new long[8];
         long[] executionTime = new long[8];
 

@@ -28,33 +28,37 @@ Edit the settings in 'cassandra.yaml' file for each servers:
 
 Save the file and restart/run the cassandra server. Repeat this for all five servers
 
-
 ### Import Data To Project
 
-Download the csv data files from..
+1. Create a folder `data` and `xact`, if not available, in the same file level as your program `src` folder.
+2. Insert the data files (in .csv format) into the `data` folder.
+3. Insert the xact files (in .txt format) into the `xact` folder.
+4. Copy the `initSetup.txt` file into the same file level as `src`. You may edit the values in the file to accomodate your machine. (`K` stands for keyspace used by Cassandra, while `I` stands for IP addresses which are the contact points)
+5. In project root folder, compile the project via `mvn clean dependency:copy-dependencies package`. If the `mvn` command is not available, type the command: `export PATH=<file location of Apache Maven>:$PATH` (e.g. `export PATH=/home/stuproj/cs4224e/apache-maven-3.5.0/bin:$PATH`), then run the `mvn` command again.
+6. Run `java -cp target/*:target/dependency/*:. Setup` once to create key space and schemas used in this project.
 
-Store the csv data files in the same file level as your program src folder by creating a new `data` folder and moving all the csv files into this folder.
+### Performance Measurement
 
-After importing the csv data files, run setup.java for the program to store this data into the distributed database. Be sure to have all five servers running when executing setup.java.
+After setting up, simply run the following command to run the performance management:
 
-### Run Client
+`java -cp target/*:target/dependency/*:. Main [numClients] [consistencyType]`
 
-The `gradlew` script assumes by default that Cassandra runs on IP address `192.168.48.229`, the address of experiment node of team CS4224C. 
+* `numClients` is the number of clients
+* `consistencyType` is the consistency level used in Cassandra (`ONE` or `QUORUM`).
 
-To change default IP address, change `cassandra.ip` in file `client/project.properties`. 
+Example:
 
-If more than one node is involved, the IP address could be from any one of the nodes.
+`java -cp target/*:target/dependency/*:. Main 10 ONE`
 
-To change consistency level of Cassandra, change `query.consistency.level` in file `client/project.properties` to your required Cassandra consistency level. This change applies to all queries.
+### Transaction Files Format
 
-Run command `gradlew client:run -q` at project root.
+The files in the `xact` folder should be named in this format:
 
-Alternatively, open Java IDE installed and import the project as `Gradle Project`. Make sure `Auto Import` is enabled.
+`<number>.txt`
 
-`Build Project` and make sure there are no missing dependencies. 
+where the `number` is the client number. For example, if you have three clients, there should be `1.txt`, `2.txt` and `3.txt` in the folder.
 
-Find and Run `Client.java` at `client/src/main/java/client/cs4224c/`. 
-
+The files in the `xact` folder should follow these format to represent the transactions:
 
 **New Transaction: `N`**
 
