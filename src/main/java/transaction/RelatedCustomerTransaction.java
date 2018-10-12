@@ -48,49 +48,48 @@ public class RelatedCustomerTransaction {
     public void relatedCustomer (int w_id, int d_id, int c_id) {
         ResultSet resultSet2 = session.execute(retrieveOrderIDCql.bind(w_id,d_id,c_id)); //get order ids
         List<Row> orderIDs = resultSet2.all();
-        List<Row> itemsByCust = null;
-        HashMap <Integer,Integer> customerWithItem = new HashMap<Integer, Integer>();
-        HashMap <Integer,ArrayList<Integer>> keyToCust = new HashMap<Integer, ArrayList<Integer>>();
+        HashMap <String,Integer> customerWithItem;
+        HashMap <String,ArrayList<Integer>> keyToCust;
         for(Row orderid : orderIDs) {
-
+            customerWithItem = new HashMap<>();
+            keyToCust = new HashMap<>();
             System.out.println("orderId: " + orderid.getInt("o_id"));
             ResultSet resultSet = session.execute(itemsOfCustCql.bind(w_id,d_id, orderid.getInt("o_id"))); //get all items for each order made by the main customer
-            itemsByCust = resultSet.all();
+            List<Row> itemsByCust = resultSet.all();
             for(Row item : itemsByCust){//for each order use all item id to get other customers (based on w o and d)
+                //System.out.println("item id: "+ item.getInt("ol_i_id"));
                 ResultSet resultSet1 = session.execute(custWithItemCql.bind(item.getInt("ol_i_id")));
                 List<Row> custList = resultSet1.all();
                 for(Row cusN : custList) {
-                    Key custKey = new Key(cusN.getInt("ol_w_id"), cusN.getInt("ol_d_id"), cusN.getInt("ol_o_id"));
-                    int key = custKey.hashCode();
+                    //System.out.println("w id: "+ cusN.getInt("ol_w_id") + ", d id: "+cusN.getInt("ol_d_id") + ", o id:" + cusN.getInt("ol_o_id"));
+                    
+                    String key = "w_id: "+ cusN.getInt("ol_w_id") + " d_id: "+ cusN.getInt("ol_d_id") + " o_id"+ cusN.getInt("ol_o_id");
                     ArrayList<Integer> addArrayList = new ArrayList<Integer>();
                     addArrayList.add(0,cusN.getInt("ol_w_id")); //index 0 is w_id
                     addArrayList.add(1,cusN.getInt("ol_d_id")); //index 1 is d_id
                     addArrayList.add(2,cusN.getInt("ol_o_id")); //index 2 is o_id
-                    keyToCust.put(key,addArrayList);
 
-                    if(customerWithItem.containsKey(key) && !customerWithItem.get(key).equals(2))
-                            customerWithItem.put(key, customerWithItem.get(key)+1);
+                    if(customerWithItem.containsKey(key) && customerWithItem.get(key).intValue()==1) {
+                        customerWithItem.put(key, customerWithItem.get(key).intValue() + 1);
+                        keyToCust.put(key, addArrayList);
+                    }
                     else {
-                            customerWithItem.put(key, 1);
+                        customerWithItem.put(key, 1);
                     }
                 }
             }
+            printRelatedCust(keyToCust,w_id,d_id,c_id);
         }
-        printRelatedCust(customerWithItem, keyToCust);
     }
 
-    private void printRelatedCust(HashMap<Integer,Integer> custWithItem, HashMap<Integer,ArrayList<Integer>> keyToCust){
-        Iterator it = custWithItem.entrySet().iterator();
+    private void printRelatedCust(HashMap<String,ArrayList<Integer>> keyToCust,int wid,int did, int cid){
+        Iterator it = keyToCust.entrySet().iterator();
         while (it.hasNext()) {
             HashMap.Entry pair = (HashMap.Entry)it.next();
-            if(pair.getValue().equals(2)) {
-                int w_id = keyToCust.get(pair.getKey()).get(0);
-                int d_id = keyToCust.get(pair.getKey()).get(1);
-                int o_id = keyToCust.get(pair.getKey()).get(2);
-                ResultSet resultSet3 = session.execute(retrieveCustIDCql.bind(w_id,d_id,o_id));
-                Row result = (resultSet3.all()).get(0);
-                System.out.println("cus_id: "+result.getInt("o_c_id")+" district_id: "+d_id+" warehouse_id: "+w_id);
-            }
+            ResultSet resultSet3 = session.execute(retrieveCustIDCql.bind(keyToCust.get(pair.getKey()).get(0),keyToCust.get(pair.getKey()).get(1),keyToCust.get(pair.getKey()).get(2)));
+            Row result = (resultSet3.all()).get(0);
+            if(wid!=keyToCust.get(pair.getKey()).get(0) && did!=keyToCust.get(pair.getKey()).get(1) && cid!=result.getInt("o_c_id"))
+                System.out.println("cus_id: "+result.getInt("o_c_id")+" district_id: "+keyToCust.get(pair.getKey()).get(1)+" warehouse_id: "+keyToCust.get(pair.getKey()).get(0));
             it.remove(); // avoids a ConcurrentModificationException
         }
     }
