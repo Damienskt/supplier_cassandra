@@ -13,20 +13,31 @@ import constant.Table;
 public class TopBalanceTransaction {
 
     private PreparedStatement customerNameCql;
-    private static final String KEY_SPACE_WITH_DOT = Table.KEY_SPACE + ".";
+    private String KEY_SPACE_WITH_DOT;
     private Session session;
     private PreparedStatement topBalanceCql;
 
-    private static final String CUSTOMER_NAME_QUERY =
+    private String CUSTOMER_NAME_QUERY =
             "SELECT c_first, c_middle, c_last "
                     + "FROM "+ KEY_SPACE_WITH_DOT +"customer "
                     + "WHERE c_w_id=? AND c_d_id=? AND c_id = ?;";
-    private static final String TOP_BALANCE_QUERY =
+    private String TOP_BALANCE_QUERY =
             "SELECT * "
                     + "FROM "+ KEY_SPACE_WITH_DOT +"customer_balances "
                     + "LIMIT 10;";
 
-    public TopBalanceTransaction(Session session) {
+    public TopBalanceTransaction(Session session, String keySpace) {
+        this.KEY_SPACE_WITH_DOT = keySpace + ".";
+
+        this.CUSTOMER_NAME_QUERY =
+                "SELECT c_first, c_middle, c_last "
+                        + "FROM "+ KEY_SPACE_WITH_DOT +"customer "
+                        + "WHERE c_w_id=? AND c_d_id=? AND c_id = ?;";
+        this.TOP_BALANCE_QUERY =
+                "SELECT * "
+                        + "FROM "+ KEY_SPACE_WITH_DOT +"customer_balances "
+                        + "LIMIT 10;";
+
         this.session = session;
         topBalanceCql = session.prepare(TOP_BALANCE_QUERY);
         customerNameCql = session.prepare(CUSTOMER_NAME_QUERY);

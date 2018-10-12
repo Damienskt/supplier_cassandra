@@ -17,18 +17,23 @@ public class OrderStatusTransaction {
     private PreparedStatement selectCustomerStatement;
     private PreparedStatement selectOrderLineStatement;
 
-    private static final String KEY_SPACE_WITH_DOT = Table.KEY_SPACE + ".";
+    private String KEY_SPACE_WITH_DOT;
 
-    private static final String SELECT_CUSTOMER =
-            " SELECT C_FIRST, C_MIDDLE, C_LAST, C_BALANCE, C_LAST_O_ID, C_O_ENTRY_D, C_O_CARRIER_ID FROM "
-            + KEY_SPACE_WITH_DOT + Table.TABLE_CUSTOMER
-            + " WHERE C_W_ID = ? AND C_D_ID = ? AND C_ID = ?; ";
-    private static final String SELECT_ORDERLINE =
-            " SELECT OL_I_ID, OL_SUPPLY_W_ID, OL_QUANTITY, OL_AMOUNT, OL_DELIVERY_D FROM "
-            + KEY_SPACE_WITH_DOT + Table.TABLE_ORDERLINE
-            + " WHERE OL_W_ID = ? AND OL_D_ID = ? AND OL_O_ID = ?; ";
+    private String SELECT_CUSTOMER;
+    private String SELECT_ORDERLINE;
 
-    public OrderStatusTransaction(Session session) {
+    public OrderStatusTransaction(Session session, String keySpace) {
+        this.KEY_SPACE_WITH_DOT = keySpace + ".";
+
+        this.SELECT_CUSTOMER =
+                " SELECT C_FIRST, C_MIDDLE, C_LAST, C_BALANCE, C_LAST_O_ID, C_O_ENTRY_D, C_O_CARRIER_ID FROM "
+                        + KEY_SPACE_WITH_DOT + Table.TABLE_CUSTOMER
+                        + " WHERE C_W_ID = ? AND C_D_ID = ? AND C_ID = ?; ";
+        this.SELECT_ORDERLINE =
+                " SELECT OL_I_ID, OL_SUPPLY_W_ID, OL_QUANTITY, OL_AMOUNT, OL_DELIVERY_D FROM "
+                        + KEY_SPACE_WITH_DOT + Table.TABLE_ORDERLINE
+                        + " WHERE OL_W_ID = ? AND OL_D_ID = ? AND OL_O_ID = ?; ";
+
         this.session = session;
         this.selectCustomerStatement = session.prepare(SELECT_CUSTOMER);
         this.selectOrderLineStatement = session.prepare(SELECT_ORDERLINE);

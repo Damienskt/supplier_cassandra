@@ -50,14 +50,14 @@ public class Transaction {
                 .build();
         session = cluster.connect();
 
-        newOrderTransaction = new NewOrderTransaction(session);
-        paymentTransaction = new PaymentTransaction(session);
-        deliveryTransaction = new DeliveryTransaction(session);
-        orderStatusTransaction = new OrderStatusTransaction(session);
-        stockLevelTransaction = new StockLevelTransaction(session);
-        popularItemTransaction = new PopularItemTransaction(session);
-        topBalanceTransaction = new TopBalanceTransaction(session);
-        relatedCustomerTransaction = new RelatedCustomerTransaction(session);
+        newOrderTransaction = new NewOrderTransaction(session, this.KEY_SPACE);
+        paymentTransaction = new PaymentTransaction(session, this.KEY_SPACE);
+        deliveryTransaction = new DeliveryTransaction(session, this.KEY_SPACE);
+        orderStatusTransaction = new OrderStatusTransaction(session, this.KEY_SPACE);
+        stockLevelTransaction = new StockLevelTransaction(session, this.KEY_SPACE);
+        popularItemTransaction = new PopularItemTransaction(session, this.KEY_SPACE);
+        topBalanceTransaction = new TopBalanceTransaction(session, this.KEY_SPACE);
+        relatedCustomerTransaction = new RelatedCustomerTransaction(session, this.KEY_SPACE);
     }
 
     public void processNewOrder(int wId, int dId, int cId, int numItems,

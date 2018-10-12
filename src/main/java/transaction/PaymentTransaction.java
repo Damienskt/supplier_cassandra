@@ -20,40 +20,14 @@ public class PaymentTransaction {
     private PreparedStatement updateDistrictYTDStatement;
     private PreparedStatement updateCustomerByPaymentStatement;
 
-    private static final String KEY_SPACE_WITH_DOT = Table.KEY_SPACE + ".";
+    private String KEY_SPACE_WITH_DOT;
 
-    private static final String SELECT_WAREHOUSE =
-            "SELECT W_STREET_1, W_STREET_2, W_CITY, W_STATE, W_ZIP, W_YTD"
-            + " FROM " +  KEY_SPACE_WITH_DOT + Table.TABLE_WAREHOUSE
-            + " WHERE W_ID = ?;";
-
-    private static final String SELECT_DISTRICT =
-            "SELECT D_STREET_1, D_STREET_2, D_CITY, D_STATE, D_ZIP, D_YTD"
-            + " FROM " + KEY_SPACE_WITH_DOT + Table.TABLE_DISTRICT
-            + " WHERE D_W_ID = ? AND D_ID = ?;";
-
-    private static final String SELECT_CUSTOMER =
-            "SELECT C_W_ID, C_D_ID, C_ID, " +
-                    "C_FIRST, C_MIDDLE, C_LAST, C_STREET_1, C_STREET_2, C_CITY, C_STATE, C_ZIP, " +
-                    "C_PHONE, C_SINCE, C_CREDIT, C_CREDIT_LIM, C_DISCOUNT, C_BALANCE, " +
-                    "C_YTD_PAYMENT, C_PAYMENT_CNT"
-            + " FROM " + KEY_SPACE_WITH_DOT + Table.TABLE_CUSTOMER
-            + " WHERE C_W_ID = ? AND C_D_ID = ? AND C_ID = ?;";
-
-    private static final String UPDATE_WAREHOUSE_YTD =
-            "UPDATE " + KEY_SPACE_WITH_DOT + Table.TABLE_WAREHOUSE
-            + " SET W_YTD = ?"
-            + " WHERE W_ID = ?;";
-
-    private static final String UPDATE_DISTRICT_YTD =
-            "UPDATE " + KEY_SPACE_WITH_DOT + Table.TABLE_DISTRICT
-                    + " SET D_YTD = ?"
-                    + " WHERE D_W_ID = ? AND D_ID = ?;";
-
-    private static final String UPDATE_CUSTOMER_BY_PAYMENT =
-            "UPDATE " + KEY_SPACE_WITH_DOT + Table.TABLE_CUSTOMER
-                    + " SET C_BALANCE = ?, C_YTD_PAYMENT = ?, C_PAYMENT_CNT = ? "
-                    + " WHERE C_W_ID = ? AND C_D_ID = ? AND C_ID = ?;";
+    private String SELECT_WAREHOUSE;
+    private String SELECT_DISTRICT;
+    private String SELECT_CUSTOMER;
+    private String UPDATE_WAREHOUSE_YTD;
+    private String UPDATE_DISTRICT_YTD;
+    private String UPDATE_CUSTOMER_BY_PAYMENT;
 
     private static final String MESSAGE_WAREHOUSE =
             "Warehouse address: Street(%1$s %2$s) City(%3$s) State(%4$s) Zip(%5$s)";
@@ -67,7 +41,42 @@ public class PaymentTransaction {
             + "Credits(%14$s, %15$s, %16$s, %17$s)";
     private static final String MESSAGE_PAYMENT = "Payment amount: %1$s";
 
-    public PaymentTransaction(Session session) {
+    public PaymentTransaction(Session session, String keySpace) {
+        this.KEY_SPACE_WITH_DOT = keySpace + ".";
+
+        this.SELECT_WAREHOUSE =
+                "SELECT W_STREET_1, W_STREET_2, W_CITY, W_STATE, W_ZIP, W_YTD"
+                        + " FROM " +  KEY_SPACE_WITH_DOT + Table.TABLE_WAREHOUSE
+                        + " WHERE W_ID = ?;";
+
+        this.SELECT_DISTRICT =
+                "SELECT D_STREET_1, D_STREET_2, D_CITY, D_STATE, D_ZIP, D_YTD"
+                        + " FROM " + KEY_SPACE_WITH_DOT + Table.TABLE_DISTRICT
+                        + " WHERE D_W_ID = ? AND D_ID = ?;";
+
+        this.SELECT_CUSTOMER =
+                "SELECT C_W_ID, C_D_ID, C_ID, " +
+                        "C_FIRST, C_MIDDLE, C_LAST, C_STREET_1, C_STREET_2, C_CITY, C_STATE, C_ZIP, " +
+                        "C_PHONE, C_SINCE, C_CREDIT, C_CREDIT_LIM, C_DISCOUNT, C_BALANCE, " +
+                        "C_YTD_PAYMENT, C_PAYMENT_CNT"
+                        + " FROM " + KEY_SPACE_WITH_DOT + Table.TABLE_CUSTOMER
+                        + " WHERE C_W_ID = ? AND C_D_ID = ? AND C_ID = ?;";
+
+        this.UPDATE_WAREHOUSE_YTD =
+                "UPDATE " + KEY_SPACE_WITH_DOT + Table.TABLE_WAREHOUSE
+                        + " SET W_YTD = ?"
+                        + " WHERE W_ID = ?;";
+
+        this.UPDATE_DISTRICT_YTD =
+                "UPDATE " + KEY_SPACE_WITH_DOT + Table.TABLE_DISTRICT
+                        + " SET D_YTD = ?"
+                        + " WHERE D_W_ID = ? AND D_ID = ?;";
+
+        this.UPDATE_CUSTOMER_BY_PAYMENT =
+                "UPDATE " + KEY_SPACE_WITH_DOT + Table.TABLE_CUSTOMER
+                        + " SET C_BALANCE = ?, C_YTD_PAYMENT = ?, C_PAYMENT_CNT = ? "
+                        + " WHERE C_W_ID = ? AND C_D_ID = ? AND C_ID = ?;";
+
         this.session = session;
         this.selectWarehouseStatement = session.prepare(SELECT_WAREHOUSE);
         this.selectDistrictStatement = session.prepare(SELECT_DISTRICT);
