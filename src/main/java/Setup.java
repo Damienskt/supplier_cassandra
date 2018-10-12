@@ -1,4 +1,5 @@
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.math.BigDecimal;
@@ -14,8 +15,8 @@ import com.datastax.driver.core.Session;
 import constant.Table;
 
 public class Setup {
-    static final String[] CONTACT_POINTS = Table.IP_ADDRESSES;
-    static final String KEY_SPACE = Table.KEY_SPACE;
+    static String[] CONTACT_POINTS = Table.IP_ADDRESSES;
+    static String KEY_SPACE = Table.KEY_SPACE;
     static final int REPLICATION_FACTOR = 3;
 
     private static final DateFormat DF = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
@@ -28,6 +29,7 @@ public class Setup {
     }
 
     private void run() {
+        readInitFile();
         Cluster cluster = Cluster.builder().addContactPoints(CONTACT_POINTS).build();
         session = cluster.connect();
 
@@ -41,6 +43,48 @@ public class Setup {
 
         session.close();
         cluster.close();
+    }
+
+    private void readInitFile() {
+        File file = new File(Table.FILE_IP_ADDRESSES);
+        try {
+            BufferedReader reader = new BufferedReader(new FileReader(file));
+            String input = reader.readLine();
+
+            while (input != null && input.length() > 0) {
+                String[] arguments = input.split(",");
+
+                if (input.charAt(0) == 'K') {
+                    KEY_SPACE = arguments[1];
+                } else if (input.charAt(0) == 'I') {
+                    String[] ipAddresses = new String[arguments.length - 1];
+                    for (int i = 0; i < ipAddresses.length; i++) {
+                        ipAddresses[i] = arguments[i+1];
+                    }
+                    CONTACT_POINTS = ipAddresses;
+                }
+                input = reader.readLine();
+            }
+            reader.close();
+            System.out.println("Key space used: " + KEY_SPACE);
+            System.out.println("IP addresses:");
+            for (int i = 0; i < CONTACT_POINTS.length; i++) {
+                if (i != 0) {
+                    System.out.print(",");
+                }
+                System.out.print(CONTACT_POINTS[i]);
+            }
+            System.out.println();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void testMe() {
+        for (String string : CONTACT_POINTS) {
+            System.out.println(string);
+        }
+        System.out.println("Keyspace is: " + KEY_SPACE);
     }
 
     private void dropOldKeySpace() {

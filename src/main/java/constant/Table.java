@@ -30,12 +30,14 @@ public class Table {
     public static final String FILE_ORDERLINE = "order-line";
     public static final String FILE_STOCK = "stock";
 
-    public static final String PERFORMANCE_OUTPUT_PATH = "performance_output.txt";
+    public static final String PERFORMANCE_OUTPUT_PATH = "performance_output_default.txt";
 
-    public static final String KEY_SPACE = "wholesale_supplier";
+    public static final String KEY_SPACE = "wholesale_supplier_default";
 
     public static final String[] IP_ADDRESSES = {"192.168.48.239","192.168.48.240","192.168.48.241",
             "192.168.48.242","192.168.48.243"};
+
+    public static final String FILE_IP_ADDRESSES = "initSetup.txt";
 
     public static String getCreateTableSuccessMessage(String tableName) {
         return "Successfully created table : " + tableName;

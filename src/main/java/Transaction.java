@@ -19,8 +19,8 @@ import transaction.*;
  * 8) Related-Customer Transaction
  */
 public class Transaction {
-    public static final String[] CONTACT_POINTS = Setup.CONTACT_POINTS;
-    public static final String KEY_SPACE = Setup.KEY_SPACE;
+    public static String[] CONTACT_POINTS = null;
+    public static String KEY_SPACE = null;
 
     private Session session;
     private NewOrderTransaction newOrderTransaction;
@@ -32,7 +32,11 @@ public class Transaction {
     private TopBalanceTransaction topBalanceTransaction;
     private RelatedCustomerTransaction relatedCustomerTransaction;
 
-    public Transaction(int index, String consistencyLevel) {
+    public Transaction(int index, String consistencyLevel, String[] contactPoints, String keySpace) {
+        this.CONTACT_POINTS = contactPoints;
+        this.KEY_SPACE = keySpace;
+        int numContactPoints = CONTACT_POINTS.length;
+
         QueryOptions queryOptions;
         if (consistencyLevel.equalsIgnoreCase("ONE")) {
             queryOptions = new QueryOptions().setConsistencyLevel(ConsistencyLevel.ONE);
@@ -41,7 +45,7 @@ public class Transaction {
         }
 
         Cluster cluster = Cluster.builder()
-                .addContactPoint(CONTACT_POINTS[index % 5])
+                .addContactPoint(CONTACT_POINTS[index % numContactPoints])
                 .withQueryOptions(queryOptions)
                 .build();
         session = cluster.connect();
