@@ -18,30 +18,36 @@ public class StockLevelTransaction {
 
     private int counter;
 
-    private static final String KEY_SPACE_WITH_DOT = Table.KEY_SPACE + ".";
+    private String KEY_SPACE_WITH_DOT;
 
-    private static final String SELECT_DISTRICT_NEXT_O_ID =
-            "SELECT D_NEXT_O_ID "
-                    + "FROM " + KEY_SPACE_WITH_DOT + Table.TABLE_DISTRICT
-                    + " WHERE D_W_ID = ? AND D_ID = ?;";
+    private String SELECT_DISTRICT_NEXT_O_ID;
+    private String SELECT_LAST_OL_I_D;
+    private String CHECK_IF_ITEM_BELOW_THRESHOLD;
 
-    private static final String SELECT_LAST_OL_I_D =
-            "SELECT OL_I_ID "
-                    + "FROM " + KEY_SPACE_WITH_DOT + Table.TABLE_ORDERLINE
-                    + " WHERE OL_D_ID = ? "
-                    + "AND OL_W_ID = ? "
-                    + "AND OL_O_ID = ?;";
+    public StockLevelTransaction(Session session, String keySpace) {
+        this.KEY_SPACE_WITH_DOT = keySpace + ".";
 
-    // Return the S_QUANTITY of the item
-    private static final String CHECK_IF_ITEM_BELOW_THRESHOLD =
-            "SELECT S_QUANTITY "
-                    + "FROM " + KEY_SPACE_WITH_DOT + Table.TABLE_STOCK
-                    + " WHERE S_W_ID = ? "
-                    + "AND S_I_ID = ? ";
-                    //+ "AND S_QUANTITY < ? "
-                    //+ "ALLOW FILTERING;";
+        this.SELECT_DISTRICT_NEXT_O_ID =
+                "SELECT D_NEXT_O_ID "
+                        + "FROM " + KEY_SPACE_WITH_DOT + Table.TABLE_DISTRICT
+                        + " WHERE D_W_ID = ? AND D_ID = ?;";
 
-    public StockLevelTransaction(Session session) {
+        this.SELECT_LAST_OL_I_D =
+                "SELECT OL_I_ID "
+                        + "FROM " + KEY_SPACE_WITH_DOT + Table.TABLE_ORDERLINE
+                        + " WHERE OL_D_ID = ? "
+                        + "AND OL_W_ID = ? "
+                        + "AND OL_O_ID = ?;";
+
+        // Return the S_QUANTITY of the item
+        this.CHECK_IF_ITEM_BELOW_THRESHOLD =
+                "SELECT S_QUANTITY "
+                        + "FROM " + KEY_SPACE_WITH_DOT + Table.TABLE_STOCK
+                        + " WHERE S_W_ID = ? "
+                        + "AND S_I_ID = ? ";
+        //+ "AND S_QUANTITY < ? "
+        //+ "ALLOW FILTERING;";
+
         this.session = session;
         this.counter = 0;
         this.selectDistrictNextOrderIdStatement = session.prepare(SELECT_DISTRICT_NEXT_O_ID);

@@ -19,38 +19,47 @@ public class PopularItemTransaction {
     private PreparedStatement lastOrdersCql;
     private PreparedStatement maxQuantityCql;
     private PreparedStatement popularItemCql;
-    private static final String KEY_SPACE_WITH_DOT = Table.KEY_SPACE + ".";
+    private String KEY_SPACE_WITH_DOT;
 
     private Session session;
     /* popular items */
-    private static final String SELECT_LAST_ORDERS =
-            "SELECT o_id, o_c_id, o_entry_d "
-                    + "FROM "+ KEY_SPACE_WITH_DOT +"orders "
-                    + "WHERE o_w_id = ? AND o_d_id = ? "
-                    + "ORDER BY o_id DESC "
-                    + "LIMIT ? ALLOW FILTERING;";
-    private static final String SELECT_MAX_QUANTITY =
-            "SELECT MAX(ol_quantity) as ol_quantity "
-                    + "FROM "+ KEY_SPACE_WITH_DOT +"order_line "
-                    + "WHERE ol_w_id = ? AND ol_d_id = ? AND ol_o_id = ?;";
-    private static final String SELECT_ITEM_NAME =
-            "SELECT i_name "
-                    + "FROM "+ KEY_SPACE_WITH_DOT +"item "
-                    + "WHERE i_id = ?;";
-    private static final String SELECT_CUSTOMER_NAME =
-            "SELECT c_first, c_middle, c_last "
-                    + "FROM "+ KEY_SPACE_WITH_DOT +"customer "
-                    + "WHERE c_w_id = ? AND c_d_id = ? AND c_id = ?;";
-    private static final String SELECT_POPULAR_ITEM =
-            "SELECT ol_i_id, ol_quantity "
-                    + "FROM "+ KEY_SPACE_WITH_DOT +"order_line "
-                    + "WHERE ol_w_id = ? AND ol_d_id = ? AND ol_o_id = ? AND ol_quantity = ? ALLOW FILTERING;";
-    private static final String SELECT_ORDER_WITH_ITEM =
-            "SELECT * "
-                    + "FROM "+ KEY_SPACE_WITH_DOT +"order_line "
-                    + "WHERE ol_w_id = ? AND ol_d_id = ? AND ol_o_id = ? AND ol_i_id = ? ALLOW FILTERING;";
+    private String SELECT_LAST_ORDERS;
+    private String SELECT_MAX_QUANTITY;
+    private String SELECT_ITEM_NAME;
+    private String SELECT_CUSTOMER_NAME;
+    private String SELECT_POPULAR_ITEM;
+    private String SELECT_ORDER_WITH_ITEM;
 
-    public PopularItemTransaction(Session session) {
+    public PopularItemTransaction(Session session, String keySpace) {
+        this.KEY_SPACE_WITH_DOT = keySpace + ".";
+
+        this.SELECT_LAST_ORDERS =
+                "SELECT o_id, o_c_id, o_entry_d "
+                        + "FROM "+ KEY_SPACE_WITH_DOT +"orders "
+                        + "WHERE o_w_id = ? AND o_d_id = ? "
+                        + "ORDER BY o_id DESC "
+                        + "LIMIT ? ALLOW FILTERING;";
+        this.SELECT_MAX_QUANTITY =
+                "SELECT MAX(ol_quantity) as ol_quantity "
+                        + "FROM "+ KEY_SPACE_WITH_DOT +"order_line "
+                        + "WHERE ol_w_id = ? AND ol_d_id = ? AND ol_o_id = ?;";
+        this.SELECT_ITEM_NAME =
+                "SELECT i_name "
+                        + "FROM "+ KEY_SPACE_WITH_DOT +"item "
+                        + "WHERE i_id = ?;";
+        this.SELECT_CUSTOMER_NAME =
+                "SELECT c_first, c_middle, c_last "
+                        + "FROM "+ KEY_SPACE_WITH_DOT +"customer "
+                        + "WHERE c_w_id = ? AND c_d_id = ? AND c_id = ?;";
+        this.SELECT_POPULAR_ITEM =
+                "SELECT ol_i_id, ol_quantity "
+                        + "FROM "+ KEY_SPACE_WITH_DOT +"order_line "
+                        + "WHERE ol_w_id = ? AND ol_d_id = ? AND ol_o_id = ? AND ol_quantity = ? ALLOW FILTERING;";
+        this.SELECT_ORDER_WITH_ITEM =
+                "SELECT * "
+                        + "FROM "+ KEY_SPACE_WITH_DOT +"order_line "
+                        + "WHERE ol_w_id = ? AND ol_d_id = ? AND ol_o_id = ? AND ol_i_id = ? ALLOW FILTERING;";
+
         this.session = session;
         /* popular items */
         orderWithItemCql = session.prepare(SELECT_ORDER_WITH_ITEM);

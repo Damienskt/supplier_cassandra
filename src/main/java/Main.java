@@ -18,8 +18,8 @@ import constant.Table;
 public class Main {
     private int numberOfClients;
     private String consistencyLevel;
-    static String[] CONTACT_POINTS = Table.IP_ADDRESSES;
-    static String KEY_SPACE = Table.KEY_SPACE;
+    static String[] CONTACT_POINTS = null;
+    static String KEY_SPACE = null;
 
     public static void main( String[] args ) {
         int numberOfClients;
@@ -31,6 +31,11 @@ public class Main {
             numberOfClients = (Integer.parseInt(args[0]));
             consistencyLevel = args[1];
         }
+
+        if (CONTACT_POINTS == null)
+            CONTACT_POINTS = Table.IP_ADDRESSES;
+        if (KEY_SPACE == null)
+            KEY_SPACE = Table.KEY_SPACE;
 
         System.out.println("Number of clients: " + numberOfClients
                 + ", Consistency Level: " + consistencyLevel);

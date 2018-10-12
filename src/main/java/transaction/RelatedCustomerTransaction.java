@@ -18,26 +18,34 @@ public class RelatedCustomerTransaction {
     private PreparedStatement retrieveCustIDCql;
     private PreparedStatement retrieveOrderIDCql;
 
-    private static final String KEY_SPACE_WITH_DOT = Table.KEY_SPACE + ".";
+    private String KEY_SPACE_WITH_DOT;
     private Session session;
 
-    private static final String ITEMS_CUST_QUERY = //retrieve Items ordered by main customer
-            "SELECT ol_i_id "
-                    + "FROM "+ KEY_SPACE_WITH_DOT +"order_line "
-                    + "WHERE ol_w_id=? AND ol_d_id=? AND ol_o_id = ?;";
-    private static final String CUSTS_ITEM_QUERY = //retrieve customers that have the same item
-            "SELECT ol_w_id, ol_o_id, ol_d_id "
-                    + "FROM "+ KEY_SPACE_WITH_DOT +"ordered_items "
-                    + "WHERE ol_i_id = ?;";
-    private static final String ORDER_CUST_QUERY = //retrieve order by main customer
-            "SELECT o_id "
-                    + "FROM "+ KEY_SPACE_WITH_DOT + "order_partitioned_by_customer "
-                    + "WHERE o_w_id=? AND o_d_id=? AND o_c_id = ?;";
-    private static final String CUST_ID_QUERY = //retrieve c_id from order
-            "SELECT o_c_id "
-                    + "FROM "+ KEY_SPACE_WITH_DOT + "orders "
-                    + "WHERE o_w_id=? AND o_d_id=? AND o_id = ?;";
-    public RelatedCustomerTransaction(Session session) {
+    private String ITEMS_CUST_QUERY;
+    private String CUSTS_ITEM_QUERY;
+    private String ORDER_CUST_QUERY;
+    private String CUST_ID_QUERY;
+
+    public RelatedCustomerTransaction(Session session, String keySpace) {
+        this.KEY_SPACE_WITH_DOT = keySpace + ".";
+
+        this.ITEMS_CUST_QUERY = //retrieve Items ordered by main customer
+                "SELECT ol_i_id "
+                        + "FROM "+ KEY_SPACE_WITH_DOT +"order_line "
+                        + "WHERE ol_w_id=? AND ol_d_id=? AND ol_o_id = ?;";
+        this.CUSTS_ITEM_QUERY = //retrieve customers that have the same item
+                "SELECT ol_w_id, ol_o_id, ol_d_id "
+                        + "FROM "+ KEY_SPACE_WITH_DOT +"ordered_items "
+                        + "WHERE ol_i_id = ?;";
+        this.ORDER_CUST_QUERY = //retrieve order by main customer
+                "SELECT o_id "
+                        + "FROM "+ KEY_SPACE_WITH_DOT + "order_partitioned_by_customer "
+                        + "WHERE o_w_id=? AND o_d_id=? AND o_c_id = ?;";
+        this.CUST_ID_QUERY = //retrieve c_id from order
+                "SELECT o_c_id "
+                        + "FROM "+ KEY_SPACE_WITH_DOT + "orders "
+                        + "WHERE o_w_id=? AND o_d_id=? AND o_id = ?;";
+
         this.session = session;
         itemsOfCustCql = session.prepare(ITEMS_CUST_QUERY);
         custWithItemCql = session.prepare(CUSTS_ITEM_QUERY);
@@ -51,8 +59,8 @@ public class RelatedCustomerTransaction {
         HashMap <String,Integer> customerWithItem;
         HashMap <String,ArrayList<Integer>> keyToCust;
         for(Row orderid : orderIDs) {
-            customerWithItem = new HashMap<>();
-            keyToCust = new HashMap<>();
+            customerWithItem = new HashMap();
+            keyToCust = new HashMap();
             System.out.println("orderId: " + orderid.getInt("o_id"));
             ResultSet resultSet = session.execute(itemsOfCustCql.bind(w_id,d_id, orderid.getInt("o_id"))); //get all items for each order made by the main customer
             List<Row> itemsByCust = resultSet.all();

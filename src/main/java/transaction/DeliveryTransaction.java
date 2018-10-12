@@ -25,45 +25,55 @@ public class DeliveryTransaction {
     private Row selectedCustomer;
     private Row selectedMinimumOrder; // Oldest order not delivered
 
-    private static final String KEY_SPACE_WITH_DOT = Table.KEY_SPACE + ".";
+    private String KEY_SPACE_WITH_DOT;
 
-    private static final String SELECT_MINIMUM_ORDER =
-            "SELECT O_ID, O_C_ID, O_ENTRY_D"
-                    + " FROM " + KEY_SPACE_WITH_DOT + Table.TABLE_ORDER
-                    + " WHERE O_W_ID = ? AND O_D_ID = ? AND O_CARRIER_ID = -1" // need to check the null value
-                    + " LIMIT 1 ALLOW FILTERING;"; //" ORDER BY O_ID ASC LIMIT 1 ALLOW FILTERING;"
+    private String SELECT_MINIMUM_ORDER;
+    private String SELECT_ORDER_LINES;
+    private String SELECT_CUSTOMER;
+    private String UPDATE_CUSTOMER_BY_DELIVERY;
+    private String UPDATE_ORDER_LINE;
+    private String UPDATE_ORDERS;
+    private String UPDATE_CUSTOMER_O_C_ID;
 
-    private static final String SELECT_ORDER_LINES =
-            "SELECT OL_NUMBER, OL_AMOUNT "
-                    + "FROM " + KEY_SPACE_WITH_DOT + Table.TABLE_ORDERLINE
-                    + " WHERE OL_W_ID = ? AND OL_D_ID = ? AND OL_O_ID = ?;";
+    public DeliveryTransaction(Session session, String keySpace) {
+        this.KEY_SPACE_WITH_DOT = keySpace + ".";
 
-    private static final String SELECT_CUSTOMER =
-            "SELECT C_BALANCE, C_DELIVERY_CNT, C_LAST_O_ID "
-                    + "FROM " + KEY_SPACE_WITH_DOT + Table.TABLE_CUSTOMER
-                    + " WHERE C_W_ID = ? AND C_D_ID = ? AND C_ID = ?;";
+        this.SELECT_MINIMUM_ORDER =
+                "SELECT O_ID, O_C_ID, O_ENTRY_D"
+                        + " FROM " + KEY_SPACE_WITH_DOT + Table.TABLE_ORDER
+                        + " WHERE O_W_ID = ? AND O_D_ID = ? AND O_CARRIER_ID = -1" // need to check the null value
+                        + " LIMIT 1 ALLOW FILTERING;"; //" ORDER BY O_ID ASC LIMIT 1 ALLOW FILTERING;"
 
-    private static final String UPDATE_CUSTOMER_BY_DELIVERY =
-            "UPDATE " + KEY_SPACE_WITH_DOT + Table.TABLE_CUSTOMER
-                    + " SET C_BALANCE = ?, C_DELIVERY_CNT = ?"
-                    + " WHERE C_W_ID = ? AND C_D_ID = ? AND C_ID = ?;";
+        this.SELECT_ORDER_LINES =
+                "SELECT OL_NUMBER, OL_AMOUNT "
+                        + "FROM " + KEY_SPACE_WITH_DOT + Table.TABLE_ORDERLINE
+                        + " WHERE OL_W_ID = ? AND OL_D_ID = ? AND OL_O_ID = ?;";
 
-    private static final String UPDATE_ORDER_LINE =
-            "UPDATE " + KEY_SPACE_WITH_DOT + Table.TABLE_ORDERLINE
-                    + " SET OL_DELIVERY_D = ? "
-                    + "WHERE OL_W_ID = ? AND OL_D_ID = ? AND OL_O_ID = ? AND OL_NUMBER = ?;";
+        this.SELECT_CUSTOMER =
+                "SELECT C_BALANCE, C_DELIVERY_CNT, C_LAST_O_ID "
+                        + "FROM " + KEY_SPACE_WITH_DOT + Table.TABLE_CUSTOMER
+                        + " WHERE C_W_ID = ? AND C_D_ID = ? AND C_ID = ?;";
 
-    private static final String UPDATE_ORDERS =
-            "UPDATE " + KEY_SPACE_WITH_DOT + Table.TABLE_ORDER
-                    + " SET O_CARRIER_ID = ? "
-                    + "WHERE O_W_ID = ? AND O_D_ID = ? AND O_ID = ? AND O_C_ID = ?;";
+        this.UPDATE_CUSTOMER_BY_DELIVERY =
+                "UPDATE " + KEY_SPACE_WITH_DOT + Table.TABLE_CUSTOMER
+                        + " SET C_BALANCE = ?, C_DELIVERY_CNT = ?"
+                        + " WHERE C_W_ID = ? AND C_D_ID = ? AND C_ID = ?;";
 
-    private static final String UPDATE_CUSTOMER_O_C_ID =
-            "UPDATE " + KEY_SPACE_WITH_DOT + Table.TABLE_CUSTOMER
-                    + " SET C_O_CARRIER_ID = ? "
-                    + "WHERE C_W_ID = ? AND C_D_ID = ? AND C_ID = ?;";
+        this.UPDATE_ORDER_LINE =
+                "UPDATE " + KEY_SPACE_WITH_DOT + Table.TABLE_ORDERLINE
+                        + " SET OL_DELIVERY_D = ? "
+                        + "WHERE OL_W_ID = ? AND OL_D_ID = ? AND OL_O_ID = ? AND OL_NUMBER = ?;";
 
-    public DeliveryTransaction(Session session) {
+        this.UPDATE_ORDERS =
+                "UPDATE " + KEY_SPACE_WITH_DOT + Table.TABLE_ORDER
+                        + " SET O_CARRIER_ID = ? "
+                        + "WHERE O_W_ID = ? AND O_D_ID = ? AND O_ID = ? AND O_C_ID = ?;";
+
+        this.UPDATE_CUSTOMER_O_C_ID =
+                "UPDATE " + KEY_SPACE_WITH_DOT + Table.TABLE_CUSTOMER
+                        + " SET C_O_CARRIER_ID = ? "
+                        + "WHERE C_W_ID = ? AND C_D_ID = ? AND C_ID = ?;";
+
         this.session = session;
         this.selectMinimumOrderStatement = session.prepare(SELECT_MINIMUM_ORDER);
         this.selectOrderLinesStatement = session.prepare(SELECT_ORDER_LINES);
