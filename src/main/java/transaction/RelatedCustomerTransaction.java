@@ -54,11 +54,11 @@ public class RelatedCustomerTransaction {
     }
 
     public void relatedCustomer (int w_id, int d_id, int c_id) {
-        ResultSet resultSet2 = session.execute(retrieveOrderIDCql.bind(w_id,d_id,c_id)); //get order ids
+        ResultSet resultSet2 = session.execute(retrieveOrderIDCql.bind(w_id,d_id,c_id)); //get order ids of the customer in question
         List<Row> orderIDs = resultSet2.all();
-        HashMap <String,Integer> customerWithItem;
-        HashMap <String,ArrayList<Integer>> keyToCust;
-        for(Row orderid : orderIDs) {
+        HashMap <String,Integer> customerWithItem; //store the similar count of each unqiue order
+        HashMap <String,ArrayList<Integer>> keyToCust; //store the identifiers w_id d_id and o_id needed
+        for(Row orderid : orderIDs) { //for all order ids get the list of items
             customerWithItem = new HashMap();
             keyToCust = new HashMap();
             System.out.println("orderId: " + orderid.getInt("o_id"));
@@ -77,11 +77,11 @@ public class RelatedCustomerTransaction {
                     addArrayList.add(1,cusN.getInt("ol_d_id")); //index 1 is d_id
                     addArrayList.add(2,cusN.getInt("ol_o_id")); //index 2 is o_id
 
-                    if(customerWithItem.containsKey(key) && customerWithItem.get(key).intValue()==1) {
+                    if(customerWithItem.containsKey(key) && customerWithItem.get(key).intValue()==1) { //add one value for existing key to account for the similar item
                         customerWithItem.put(key, customerWithItem.get(key).intValue() + 1);
                         keyToCust.put(key, addArrayList);
                     }
-                    else {
+                    else { //if key doesnt exist create one
                         customerWithItem.put(key, 1);
                     }
                 }
