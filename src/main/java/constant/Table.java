@@ -16,6 +16,9 @@ public class Table {
     public static final String TABLE_ORDERLINE = "order_line";
     public static final String TABLE_STOCK = "stock";
 
+    public static final String VIEW_CUSTOMER_BALANCES = "customer_balances";
+    public static final String VIEW_ORDERED_ITEMS = "ordered_items";
+    public static final String VIEW_ORDER_PARTITIONED_BY_CUSTOMER = "order_partitioned_by_customer";
     /**
      *  File names of the data
      */
@@ -27,6 +30,15 @@ public class Table {
     public static final String FILE_ORDERLINE = "order-line";
     public static final String FILE_STOCK = "stock";
 
+    public static final String PERFORMANCE_OUTPUT_PATH = "performance_output_default.txt";
+
+    public static final String KEY_SPACE = "wholesale_supplier_default";
+
+    public static final String[] IP_ADDRESSES = {"192.168.48.239","192.168.48.240","192.168.48.241",
+            "192.168.48.242","192.168.48.243"};
+
+    public static final String FILE_IP_ADDRESSES = "initSetup.txt";
+
     public static String getCreateTableSuccessMessage(String tableName) {
         return "Successfully created table : " + tableName;
     }
@@ -37,6 +49,10 @@ public class Table {
 
     public static String getDataFileLocation(String fileNameWithoutExtension) {
         return "data/" + fileNameWithoutExtension + ".csv";
+    }
+
+    public static String getTransactionFileLocation(int fileNameWithoutExtension) {
+        return "xact/" + fileNameWithoutExtension + ".txt";
     }
 
     public static String getLoadingErrorMessage(String tableName) {

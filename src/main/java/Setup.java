@@ -1,4 +1,5 @@
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.math.BigDecimal;
@@ -14,9 +15,9 @@ import com.datastax.driver.core.Session;
 import constant.Table;
 
 public class Setup {
-    static final String[] CONTACT_POINTS = {"localhost"};
-    static final String KEY_SPACE = "wholesale_supplier";
-    static final int REPLICATION_FACTOR = 1;
+    static String[] CONTACT_POINTS = Table.IP_ADDRESSES;
+    static String KEY_SPACE = Table.KEY_SPACE;
+    static final int REPLICATION_FACTOR = 3;
 
     private static final DateFormat DF = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
 
@@ -28,18 +29,62 @@ public class Setup {
     }
 
     private void run() {
+        readInitFile();
         Cluster cluster = Cluster.builder().addContactPoints(CONTACT_POINTS).build();
         session = cluster.connect();
 
         dropOldKeySpace();
         createKeySpace();
         createSchema();
+        createView();
         loadData();
 
         System.out.println("Data has been successfully imported into the database.");
 
         session.close();
         cluster.close();
+    }
+
+    private void readInitFile() {
+        File file = new File(Table.FILE_IP_ADDRESSES);
+        try {
+            BufferedReader reader = new BufferedReader(new FileReader(file));
+            String input = reader.readLine();
+
+            while (input != null && input.length() > 0) {
+                String[] arguments = input.split(",");
+
+                if (input.charAt(0) == 'K') {
+                    KEY_SPACE = arguments[1];
+                } else if (input.charAt(0) == 'I') {
+                    String[] ipAddresses = new String[arguments.length - 1];
+                    for (int i = 0; i < ipAddresses.length; i++) {
+                        ipAddresses[i] = arguments[i+1];
+                    }
+                    CONTACT_POINTS = ipAddresses;
+                }
+                input = reader.readLine();
+            }
+            reader.close();
+            System.out.println("Key space used: " + KEY_SPACE);
+            System.out.println("IP addresses:");
+            for (int i = 0; i < CONTACT_POINTS.length; i++) {
+                if (i != 0) {
+                    System.out.print(",");
+                }
+                System.out.print(CONTACT_POINTS[i]);
+            }
+            System.out.println();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void testMe() {
+        for (String string : CONTACT_POINTS) {
+            System.out.println(string);
+        }
+        System.out.println("Keyspace is: " + KEY_SPACE);
     }
 
     private void dropOldKeySpace() {
@@ -108,6 +153,9 @@ public class Setup {
                 + " C_PAYMENT_CNT INT, "
                 + " C_DELIVERY_CNT INT, "
                 + " C_DATA TEXT, "
+                + " C_LAST_O_ID INT, "
+                + " C_O_ENTRY_D TIMESTAMP, "
+                + " C_O_CARRIER_ID INT, "
                 + " PRIMARY KEY (C_W_ID, C_D_ID, C_ID) "
                 + ");";
 
@@ -120,8 +168,8 @@ public class Setup {
                 + " O_OL_CNT DECIMAL, "
                 + " O_ALL_LOCAL DECIMAL, "
                 + " O_ENTRY_D TIMESTAMP, "
-                + " PRIMARY KEY (O_W_ID, O_D_ID, O_ID, O_C_ID) "
-                + ");";
+                + " PRIMARY KEY ((O_W_ID, O_D_ID), O_ID, O_C_ID) "
+                + ") WITH CLUSTERING ORDER BY (O_ID ASC);";
 
         String createItemQuery = "CREATE TABLE " + KEY_SPACE + "." + Table.TABLE_ITEM + " ("
                 + " I_ID INT, "
@@ -181,6 +229,39 @@ public class Setup {
         System.out.println(Table.getCreateTableSuccessMessage(Table.TABLE_ORDERLINE));
         session.execute(createStockQuery);
         System.out.println(Table.getCreateTableSuccessMessage(Table.TABLE_STOCK));
+    }
+
+    private void createView() {
+        String createCustomerBalancesViewCommand = "CREATE MATERIALIZED VIEW " + KEY_SPACE + "." + Table.VIEW_CUSTOMER_BALANCES + " AS "
+                + " SELECT C_ID from " + KEY_SPACE + "." + Table.TABLE_CUSTOMER
+                + " WHERE C_W_ID IS NOT NULL AND C_D_ID IS NOT NULL AND C_ID IS NOT NULL "
+                + " AND C_BALANCE IS NOT NULL "
+                + " PRIMARY KEY (C_BALANCE, C_W_ID, C_D_ID, C_ID)"
+                + " WITH CLUSTERING ORDER BY (C_BALANCE DESC)";
+        session.execute(createCustomerBalancesViewCommand);
+        System.out.println("Successfully created materialized view : " + Table.VIEW_CUSTOMER_BALANCES);
+
+        String createOrderedItemsViewCommand = "CREATE MATERIALIZED VIEW " + KEY_SPACE + "." + Table.VIEW_ORDERED_ITEMS + " AS "
+                + "SELECT OL_W_ID, OL_D_ID, OL_O_ID, OL_I_ID FROM " + KEY_SPACE + "." + Table.TABLE_ORDERLINE
+                + " WHERE OL_W_ID IS NOT NULL "
+                + "AND OL_D_ID IS NOT NULL "
+                + "AND OL_O_ID IS NOT NULL "
+                + "AND OL_NUMBER IS NOT NULL "
+                + "AND OL_I_ID IS NOT NULL "
+                + "PRIMARY KEY (OL_I_ID, OL_W_ID, OL_D_ID, OL_O_ID, OL_NUMBER);";
+        session.execute(createOrderedItemsViewCommand);
+        System.out.println("Successfully created materialized view : " + Table.VIEW_ORDERED_ITEMS);
+
+        String createOrderPartitionedByCustomerViewCommand = "CREATE MATERIALIZED VIEW " + KEY_SPACE + "."
+                + Table.VIEW_ORDER_PARTITIONED_BY_CUSTOMER + " AS "
+                + "SELECT O_W_ID, O_D_ID, O_ID, O_C_ID FROM " + KEY_SPACE + "." + Table.TABLE_ORDER
+                + " WHERE O_W_ID IS NOT NULL "
+                + "AND O_D_ID IS NOT NULL "
+                + "AND O_ID IS NOT NULL "
+                + "AND O_C_ID IS NOT NULL "
+                + "PRIMARY KEY ((O_C_ID, O_W_ID, O_D_ID), O_ID);";
+        session.execute(createOrderPartitionedByCustomerViewCommand);
+        System.out.println("Successfully created materialized view : " + Table.VIEW_ORDER_PARTITIONED_BY_CUSTOMER);
     }
 
     private void loadData() {
@@ -252,8 +333,9 @@ public class Setup {
                 + " C_STREET_1, C_STREET_2, C_CITY, C_STATE, C_ZIP, "
                 + " C_PHONE, C_SINCE, C_CREDIT, C_CREDIT_LIM, C_DISCOUNT, "
                 + " C_BALANCE, C_YTD_PAYMENT, C_PAYMENT_CNT, C_DELIVERY_CNT, "
-                + " C_DATA ) "
-                + " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?); ";
+                + " C_DATA, C_LAST_O_ID, C_O_ENTRY_D, C_O_CARRIER_ID ) "
+                + " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, "
+                + " ?, ?, ?); ";
         PreparedStatement insertCustomerStatement = session.prepare(insertCustomerQuery);
         String currLine;
 
@@ -269,7 +351,7 @@ public class Setup {
                         line[3], line[4], line[5], line[6], line[7], line[8], line[9], line[10], line[11],
                         DF.parse(line[12]), line[13], new BigDecimal(line[14]), new BigDecimal(line[15]),
                         new BigDecimal(line[16]), Float.parseFloat(line[17]), Integer.parseInt(line[18]),
-                        Integer.parseInt(line[19]), line[20]);
+                        Integer.parseInt(line[19]), line[20], null, null, null);
                 session.execute(bs);
                 count++;
                 if (count % 3000 == 0) {
@@ -288,7 +370,11 @@ public class Setup {
                 + " O_W_ID, O_D_ID, O_ID, O_C_ID, O_CARRIER_ID, "
                 + " O_OL_CNT, O_ALL_LOCAL, O_ENTRY_D ) "
                 + " VALUES (?, ?, ?, ?, ?, ?, ?, ?); ";
+        String updateCustomerQuery = "UPDATE " + KEY_SPACE + "." + Table.TABLE_CUSTOMER +
+                " SET C_LAST_O_ID = ?, C_O_ENTRY_D = ?, C_O_CARRIER_ID = ? " +
+                " WHERE C_W_ID = ? AND C_D_ID = ? AND C_ID = ?;";
         PreparedStatement insertOrderStatement = session.prepare(insertOrderQuery);
+        PreparedStatement updateCustomerStatement = session.prepare(updateCustomerQuery);
         String currLine;
 
         try {
@@ -299,20 +385,28 @@ public class Setup {
             while ((currLine = bf.readLine()) != null) {
                 String[] line = currLine.split(",");
                 BoundStatement bs = null; // O_CARRIER_ID
+                BoundStatement bs2 = null;
                 if (!line[4].equals("null")) {
                     bs = insertOrderStatement.bind(
                             Integer.parseInt(line[0]), Integer.parseInt(line[1]), Integer.parseInt(line[2]),
                             Integer.parseInt(line[3]), Integer.parseInt(line[4]),
                             new BigDecimal(line[5]), new BigDecimal(line[6]),
                             DF.parse(line[7]));
+                    bs2 = updateCustomerStatement.bind(
+                            Integer.parseInt(line[2]), DF.parse(line[7]), Integer.parseInt(line[4]),
+                            Integer.parseInt(line[0]), Integer.parseInt(line[1]), Integer.parseInt(line[3]));
                 } else {
                     bs = insertOrderStatement.bind(
                             Integer.parseInt(line[0]), Integer.parseInt(line[1]), Integer.parseInt(line[2]),
-                            Integer.parseInt(line[3]), null,
+                            Integer.parseInt(line[3]), -1,
                             new BigDecimal(line[5]), new BigDecimal(line[6]),
                             DF.parse(line[7]));
+                    bs2 = updateCustomerStatement.bind(
+                            Integer.parseInt(line[2]), DF.parse(line[7]), -1,
+                            Integer.parseInt(line[0]), Integer.parseInt(line[1]), Integer.parseInt(line[3]));
                 }
                 session.execute(bs);
+                session.execute(bs2);
                 count++;
                 if (count % 3000 == 0) {
                     System.out.println(Table.getLoadingMessage(Table.TABLE_ORDER) + " (" + Math.round((count/300000.0)*100) + "% done)");
@@ -420,7 +514,7 @@ public class Setup {
                 session.execute(bs);
                 count++;
                 if (count % 1000 == 0) {
-                    System.out.println(Table.getLoadingMessage(Table.TABLE_STOCK) + " (" + Math.round((count/100000.0)*100) + "% done)");
+                    System.out.println(Table.getLoadingMessage(Table.TABLE_STOCK) + " (" + Math.round((count/1000000.0)*1000) / 10.0 + "% done)");
                 }
             }
         } catch (IOException ioe) {
